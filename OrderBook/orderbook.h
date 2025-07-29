@@ -9,36 +9,9 @@ class OrderBook {
 private:
     Asks asks;
     Bids bids;
-    OrderManager& orderManager;
 
 public:
-    explicit OrderBook(OrderManager& orderManager)
-    :orderManager(orderManager)
-    {}
-
-    void AddOrder(std::unique_ptr<Order> order) {
-        Price price = order->GetPrice();
-        Quantity qty = order->GetQuantity();
-        Side side = order->GetSide();
-        OrderID id = order->GetOrderID();
-
-        if (side == Side::Buy) {
-            auto it = bids.find(price);
-            if (it == bids.end()) {
-                bids.emplace(price, PriceLevel(price));
-            }
-            bids.at(price).AddOrder(id, qty);
-        } else {
-            auto it = asks.find(price);
-            if (it == asks.end()) {
-                asks.emplace(price, PriceLevel(price));
-            }
-            asks.at(price).AddOrder(id, qty);
-        }
-
-
-        orderManager.AddOrder(std::move(order));
-    }
+    friend class Exchange;
     
     Price BestAsk(){
         return asks.begin()->first;

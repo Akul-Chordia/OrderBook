@@ -4,13 +4,13 @@
 #include "ordermanager.h"
 #include "pricelevels.h"
 #include "orderbook.h"
-#include "matchingengine.h"
+#include "exchange.h"
 #include "agents.h"
 #include "hft.h"
 
 
 
-void dummy_start_orders(OrderBook* orderbook){
+void dummy_start_orders(Exchange* exchange){
     auto now = std::chrono::steady_clock::now().time_since_epoch();
     std::default_random_engine rng(static_cast<unsigned>(std::chrono::system_clock::now().time_since_epoch().count()));
     std::uniform_int_distribution<int> qty_dist(1, 20);
@@ -24,7 +24,7 @@ void dummy_start_orders(OrderBook* orderbook){
         TimeStamp ts = now + std::chrono::milliseconds(i);
 
         auto order = std::make_unique<Order>(id, price, qty, OrderType::Limit, side, ts);
-        orderbook->AddOrder(std::move(order));
+        exchange->dummyAddOrder(std::move(order));
     }
     
     std::uniform_real_distribution<double> price_dist2(101.0, 110.0);
@@ -37,16 +37,18 @@ void dummy_start_orders(OrderBook* orderbook){
         TimeStamp ts = now + std::chrono::milliseconds(i);
 
         auto order = std::make_unique<Order>(id, price, qty, OrderType::Limit, side, ts);
-        orderbook->AddOrder(std::move(order));
+        exchange->dummyAddOrder(std::move(order));
     }
 }
 
 int main(int argc, const char * argv[]) {
     OrderManager orderManager;
-    OrderBook orderBook(orderManager);
-    OrderBook* orderbookptr = &orderBook;
+    OrderBook orderBook;
+    Exchange exchange(orderBook, orderManager);
+    
+    Exchange* exchangeptr = &exchange;
 
-    dummy_start_orders(orderbookptr);
+    dummy_start_orders(exchangeptr);
 
     orderBook.PrintOrderBook();
 
