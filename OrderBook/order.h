@@ -35,14 +35,13 @@ public:
     TimeStamp GetTimestamp() const { return timestamp; }
     OrderStatus GetOrderStatus() const { return orderStatus; }
     
+    
     void Fill(Quantity quantity){
-        if (quantity > this->remainingQuantity){
-            throw std::logic_error("Filling more than remaining quantity");
+        if (quantity > remainingQuantity){
+            throw std::logic_error("Filling more than remaining quantity");  // this should never happen
         }
         remainingQuantity -= quantity;
-        if (remainingQuantity == 0){
-            orderStatus = OrderStatus::Filled;
-        }
+        (remainingQuantity == 0) ? orderStatus = OrderStatus::Filled : orderStatus = OrderStatus::PartiallyFilled;
     }
     
     void Cancel(){

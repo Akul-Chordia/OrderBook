@@ -12,26 +12,33 @@ private:
     Quantity totalQuantity = 0;
     OrderIDs orderIDs;
     OrderIDMap orderIDMap;
+    
 public:
     explicit PriceLevel(Price price)
     :price(price)
     {}
+    
+    Price GetPrice() { return price;}
+    Quantity GetQuantity() const { return totalQuantity;}
+    OrderIDs& GetOrderIDs() { return orderIDs;}
 
-    void AddOrder(OrderID orderID, Quantity quantity) {
+    void AddOrder(Order* orderPtr) {
+        OrderID orderID = orderPtr->GetOrderID();
         orderIDs.push_back(orderID);
         orderIDMap[orderID] = std::prev(orderIDs.end());
-        totalQuantity += quantity;
+        totalQuantity += orderPtr->GetQuantity();
     }
 
-    void RemoveOrder(OrderID orderID, Quantity quantity) {
-        auto it = orderIDMap.find(orderID);
+    void RemoveOrder(Order* orderPtr) {
+        auto it = orderIDMap.find(orderPtr->GetOrderID());
         if (it != orderIDMap.end()) {
             orderIDs.erase(it->second);
             orderIDMap.erase(it);
-            totalQuantity -= quantity;
+            totalQuantity -= orderPtr->GetQuantity();
         }
     }
-
-    OrderIDs& GetOrderIDs() { return orderIDs; }
-    Quantity GetTotalQuantity() const { return totalQuantity; }
+    
+    bool Empty(){
+        return orderIDs.empty();
+    }
 };

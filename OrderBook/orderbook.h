@@ -11,27 +11,33 @@ private:
     Bids bids;
 
 public:
-    friend class Exchange;
-    
-    Price BestAsk(){
-        return asks.begin()->first;
+    PriceLevel& BestAsk(){
+        return asks.begin()->second;
     }
     
-    Price BestBid(){
-        return bids.begin()->first;
+    PriceLevel& BestBid(){
+        return bids.begin()->second;
+    }
+    
+    bool AsksEmpty(){
+        return asks.empty();
+    }
+    
+    bool BidsEmpty(){
+        return bids.empty();
     }
 
     void PrintOrderBook() {
         std::cout << "Asks:\n";
         for (auto it = asks.rbegin(); it != asks.rend(); ++it) {
             const auto& [price, level] = *it;
-            std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetTotalQuantity()), '|');
-            std::cout << level.GetTotalQuantity() << "\n";
+            std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
+            std::cout << level.GetQuantity() << "\n";
         }
         std::cout << "Bids:\n";
         for (const auto& [price, level] : bids) {
-            std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetTotalQuantity()), '|');
-            std::cout << level.GetTotalQuantity() << "\n";
+            std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
+            std::cout << level.GetQuantity() << "\n";
         }
     }
 };
