@@ -20,6 +20,7 @@
 
 /* Begin PBXFileReference section */
 		CFCC6C122E1C4B06000B48A0 /* OrderBook */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OrderBook; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFF54A502E4C790200643038 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,6 +45,7 @@
 		CFCC6C092E1C4B06000B48A0 = {
 			isa = PBXGroup;
 			children = (
+				CFF54A502E4C790200643038 /* README.md */,
 				CFCC6C142E1C4B06000B48A0 /* OrderBook */,
 				CFCC6C132E1C4B06000B48A0 /* Products */,
 			);
