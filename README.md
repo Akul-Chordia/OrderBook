@@ -11,7 +11,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 - **Immediate-or-Cancel (IOC)** – Execute immediately for the available quantity, cancel any remainder.
 - **Custom Matching Engine** – Price-time priority with separate bid and ask books.
 - **Memory-Safe Design** – Uses smart pointers (`std::unique_ptr`) for order storage.
-- **Clear Separation of Concerns** – Distinct classes for order management, price levels, and matching logic.
+- **High level of Abstraction** – Distinct classes for order management, price levels, and matching logic.
 
 ## Project Structure
 
