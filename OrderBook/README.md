@@ -1,4 +1,3 @@
-```markdown
 # C++ Order Book from Scratch
 
 A fully custom implementation of an order book in C++, supporting multiple order types and designed for speed and extensibility.  
@@ -18,6 +17,8 @@ Built entirely from scratch — no external trading libraries — with a focus o
 
 ```
 ├── main.cpp            # Entry point
+├── emuns.h             # Type abstraction
+├── includes.h          # All includes
 ├── order.h             # Order class (data structure and types)
 ├── orderManager.h      # Tracks all live orders
 ├── priceLevel.h        # Stores and manages orders at a specific price
@@ -25,31 +26,15 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ├── exchange.h          # Core matching engine
 ├── trades.h            # Trades history
 
-````
+├── agents.h/hft.h      # Future implementation
 
-## Example Usage
-
-```cpp
-OrderBook orderBook;
-auto order1 = std::make_unique<Order>(1, Side::Buy, 100.5, 50, OrderType::Limit);
-orderBook.AddOrder(std::move(order1));
-
-auto order2 = std::make_unique<Order>(2, Side::Sell, 100.0, 30, OrderType::Market);
-orderBook.AddOrder(std::move(order2));
-````
-
-## Build
-
-```bash
-g++ -std=c++17 -O2 main.cpp -o orderbook
-./orderbook
 ```
 
 ## In Progress
 
 Currently working on a **large-scale market simulation**:
 
-* **1000 simulated agents** placing and canceling orders concurrently.
+* **1000 simulated agents** placing and cancelling orders concurrently.
 * Each agent will have a **custom artificial network latency**, affecting how quickly their orders hit the book.
 * **HFT threads** with significantly lower latency will operate alongside, exploiting their speed advantage.
 * Goal: **demonstrate how latency impacts order execution quality** and market dynamics.
@@ -63,7 +48,4 @@ This will involve:
 ## License
 
 MIT License.
-
-```
-```
 
