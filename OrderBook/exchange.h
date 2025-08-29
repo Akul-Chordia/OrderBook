@@ -40,68 +40,83 @@ public:
     }
     
     void AddOrder(std::unique_ptr<Order> order) {
-        OrderID orderID = order->GetOrderID();
-        Price price = order->GetPrice();
-        Quantity quantity = order->GetQuantity();
-        Side side = order->GetSide();
-        
+        Order* rawOrder = order.get();  // keep pointer before moving
         orderManager.AddOrder(std::move(order));
-        
-        if (side == Side::Buy){
 
+        Price price = rawOrder->GetPrice();
+        Quantity quantity = rawOrder->GetQuantity();
+        Side side = rawOrder->GetSide();
+        OrderType ordertype = rawOrder->GetOrderType();
+        
+        switch (ordertype) {
+            case OrderType::Limit:
+                LimitMatch(side, quantity, price);
+                break;
+            case OrderType::Market:
+                MarketMatch(side, quantity);
+                break;
+            case OrderType::FillOrKill:
+                // call FOK logic
+                break;
+            case OrderType::ImmediateOrCancel:
+                // call IOC logic
+                break;
+            case OrderType::INVALID:
+                throw std::runtime_error("INVALID ORDER TYPE");
+                break;
+        }
+    }
+    
+    void MarketMatch(Side side, Quantity quantity){
+        if (side == Side::Buy){
+            isEmpty()
+        } else {
             
-            switch (order->GetOrderType()) {
-                case OrderType::Limit: {
-                    //                    PriceLevel bestAsk = orderBook.BestAsk();
-                    //                    Price ask = bestAsk.GetPrice();
-                    //                    Quantity askQuantity = bestAsk.GetQuantity();
-                    //
-                    //                    if (price < ask){
-                    //                        orderBook.bids.at(price).AddOrder(orderID, quantity);
-                    //                    } else {
-                    //                        //do logic
-                    //                    }
+        }
+        while (quantity > 0 and !orderBook.AsksEmpty()){
+            PriceLevel& bestAskLevel = orderBook.BestAskLevel();
+            OrderIDs& orderIDs = bestAskLevel.GetOrderIDs();
+            while (quantity > 0 and !orderIDs.empty()){
+                Order* orderPtr = orderManager.GetOrder(orderIDs.front());
+                Quantity restingOrderQuantity = orderPtr->GetQuantity();
+                if (quantity >= restingOrderQuantity){
+                    orderPtr->Fill(restingOrderQuantity);
+                    quantity -= restingOrderQuantity;
+                    bestAskLevel.RemoveOrder(orderPtr);
+                } else {
+                    orderPtr->Fill(quantity);
+                    quantity = 0;
                 }
-                    break;
-                case OrderType::Market:
-                    while (quantity > 0 and !orderBook.AsksEmpty()){
-                        PriceLevel& bestAsk = orderBook.BestAsk();
-                        OrderIDs& orderIDs = bestAsk.GetOrderIDs();
-                        while (quantity > 0 and !orderIDs.empty()){
-                            Order* orderPtr = orderManager.GetOrder(orderIDs.front());
-                            Quantity restingOrderQunatity = orderPtr->GetQuantity();
-                            if (quantity >= restingOrderQunatity){
-                                orderPtr->Fill(restingOrderQunatity);
-                                quantity -= restingOrderQunatity;
-                                bestAsk.RemoveOrder(orderPtr);
-                            } else {
-                                orderPtr->Fill(quantity);
-                                quantity = 0;
-                            }
+            }
+        }
+    }
+    
+    void LimitMatch(Side side, Quantity quantity, Price price){
+        Price ask = orderBook.BestAsk();
+        if (price < ask or orderBook.AsksEmpty()){
+            orderBook.bids.at(price).AddOrder(order.get());
+        } else {
+            while (quantity > 0){
+                PriceLevel& bestAskLevel = orderBook.BestAskLevel();
+                if (bestAskLevel.GetPrice() < price){
+                    OrderIDs& orderIDs = bestAskLevel.GetOrderIDs();
+                    while (quantity > 0 and !orderIDs.empty()){
+                        Order* orderPtr = orderManager.GetOrder(orderIDs.front());
+                        Quantity restingOrderQuantity = orderPtr->GetQuantity();
+                        if (quantity >= restingOrderQuantity){
+                            orderPtr->Fill(restingOrderQuantity);
+                            quantity -= restingOrderQuantity;
+                            bestAskLevel.RemoveOrder(orderPtr);
+                        } else {
+                            orderPtr->Fill(quantity);
+                            quantity = 0;
                         }
                     }
-                    
-                    break;
-                case OrderType::FillOrKill:
-                    // call FOK logic
-                    break;
-                case OrderType::ImmediateOrCancel:
-                    // call IOC logic
-                    break;
-                case OrderType::INVALID:
-                    throw std::runtime_error("INVALID ORDER TYPE");
-                    break;
+                } else {
+                    orderBook.bids.at(price).AddOrder(order.get());
+                }
             }
-        } else {
-            PriceLevel bestBid = orderBook.BestBid();
-            Price bid = bestBid.GetPrice();
-            Quantity bidQuantity = bestBid.GetQuantity();
         }
-        
-
-
-        
-
     }
     
     void printbook(){

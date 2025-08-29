@@ -11,12 +11,22 @@ private:
     Bids bids;
 
 public:
-    PriceLevel& BestAsk(){
+    friend class Exchange;
+    
+    PriceLevel& BestAskLevel(){
         return asks.begin()->second;
     }
     
-    PriceLevel& BestBid(){
+    PriceLevel& BestBidLevel(){
         return bids.begin()->second;
+    }
+    
+    Price BestAsk(){
+        return asks.begin()->first;
+    }
+    
+    Price BestBid(){
+        return bids.begin()->first;
     }
     
     bool AsksEmpty(){
@@ -34,6 +44,7 @@ public:
             std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
             std::cout << level.GetQuantity() << "\n";
         }
+        std::cout << "===== " << (BestAsk()-BestBid())/100 << " bips =====";
         std::cout << "Bids:\n";
         for (const auto& [price, level] : bids) {
             std::cout << price << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
