@@ -36,6 +36,14 @@ public:
     bool BidsEmpty(){
         return bids.empty();
     }
+    
+    void PrintSpread(){
+        if (AsksEmpty() or BidsEmpty()){
+            std::cout << "===== ∞ bips =====\n";
+        } else {
+            std::cout << "===== " << (BestAsk()-BestBid()) << " bips =====\n";
+        }
+    }
 
     void PrintOrderBook() {
         std::cout << "\n======= ORDER BOOK =======\n";
@@ -45,7 +53,7 @@ public:
             std::cout << price/100.0f << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
             std::cout << level.GetQuantity() << "\n";
         }
-        std::cout << "===== " << (BestAsk()-BestBid()) << " bips =====\n";
+        PrintSpread();
         std::cout << "Bids:\n";
         for (const auto& [price, level] : bids) {
             std::cout << price/100.0f << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/2), '|');
