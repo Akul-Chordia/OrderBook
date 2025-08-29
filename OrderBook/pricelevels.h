@@ -39,6 +39,13 @@ public:
         }
     }
     
+    void PartialFill(Quantity quantity){
+        totalQuantity -= quantity;
+        if (totalQuantity <= 0){
+            throw std::logic_error("Negative quantity");  // this should never happen
+        }
+    }
+    
     bool Empty() const {
         return orderIDs.empty();
     }

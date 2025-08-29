@@ -80,6 +80,7 @@ public:
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
+                        bestAskLevel.PartialFill(quantity);
                         quantity = 0;
                     }
                 }
@@ -102,6 +103,7 @@ public:
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
+                        bestBidLevel.PartialFill(quantity);
                         quantity = 0;
                     }
                 }
@@ -137,6 +139,7 @@ public:
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            bestAskLevel.PartialFill(quantity);
                             quantity = 0;
                             //std::cout << "order_matched_b";
                         }
@@ -173,6 +176,7 @@ public:
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            bestBidLevel.PartialFill(quantity);
                             quantity = 0;
                         }
                     }
@@ -256,6 +260,7 @@ public:
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            bestAskLevel.PartialFill(quantity);
                             quantity = 0;
                         }
                     }
@@ -282,6 +287,7 @@ public:
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            bestBidLevel.PartialFill(quantity);
                             quantity = 0;
                         }
                     }
