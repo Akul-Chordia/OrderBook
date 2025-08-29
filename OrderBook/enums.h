@@ -24,7 +24,7 @@ enum class Side{
     INVALID
 };
 
-using Price = std::int32_t;
+using Price = std::int32_t;  // 1 -> $0.01    (10132 -> $101.32)
 using Quantity = std::uint32_t;
 using OrderID = std::uint64_t;
 using TimeStamp = std::chrono::nanoseconds;

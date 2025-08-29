@@ -18,27 +18,28 @@ public:
     :price(price)
     {}
     
-    Price GetPrice() { return price;}
+    Price GetPrice() const { return price;}
     Quantity GetQuantity() const { return totalQuantity;}
     OrderIDs& GetOrderIDs() { return orderIDs;}
+    std::size_t GetOrderCount() const { return orderIDs.size(); }
 
     void AddOrder(Order* orderPtr) {
         OrderID orderID = orderPtr->GetOrderID();
         orderIDs.push_back(orderID);
         orderIDMap[orderID] = std::prev(orderIDs.end());
-        totalQuantity += orderPtr->GetQuantity();
+        totalQuantity += orderPtr->GetRemainingQuantity();
     }
 
     void RemoveOrder(Order* orderPtr) {
         auto it = orderIDMap.find(orderPtr->GetOrderID());
         if (it != orderIDMap.end()) {
+            totalQuantity -= orderPtr->GetRemainingQuantity();
             orderIDs.erase(it->second);
             orderIDMap.erase(it);
-            totalQuantity -= orderPtr->GetQuantity();
         }
     }
     
-    bool Empty(){
+    bool Empty() const {
         return orderIDs.empty();
     }
 };
