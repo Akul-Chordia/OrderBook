@@ -11,7 +11,7 @@ class OrderManager{
 private:
     OrderPtrs orders;
 public:
-    void AddOrder(std::unique_ptr<Order> order) {
+    void AddOrder(OrderPtr order) {
             OrderID orderID = order->GetOrderID();
             orders[orderID] = std::move(order);
     }

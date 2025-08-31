@@ -4,12 +4,13 @@
 #include "ordermanager.h"
 #include "pricelevels.h"
 #include "orderbook.h"
+#include "gateway.h"
 #include "exchange.h"
 #include "agents.h"
 #include "hft.h"
 
 
-void dummy_start_orders(Exchange* exchange){
+void dummy_start_orders(Exchange* exchange, Gateway* gateway){
     auto now = std::chrono::steady_clock::now().time_since_epoch();
     std::default_random_engine rng(static_cast<unsigned>(std::chrono::system_clock::now().time_since_epoch().count()));
     std::uniform_int_distribution<int> qty_dist(1, 20);
@@ -25,7 +26,9 @@ void dummy_start_orders(Exchange* exchange){
         TimeStamp ts = now;
 
         auto order = std::make_unique<Order>(id, price, qty, OrderType::Limit, side, ts);
-        exchange->AddOrder(std::move(order));
+        auto command = std::make_unique<Command>(order);
+        //exchange->AddOrder(std::move(order));
+        gateway->Push(std::move(command));
         buys++;
         //std::cout << "\033[2J\033[H" << std::flush;
         //exchange->PrintBook();
@@ -38,9 +41,10 @@ void dummy_start_orders(Exchange* exchange){
         qty = qty_dist(rng);
         side = Side::Sell;
         ts = now;
-
         order = std::make_unique<Order>(id, price, qty, OrderType::Limit, side, ts);
-        exchange->AddOrder(std::move(order));
+        command = std::make_unique<Command>(order);
+        //exchange->AddOrder(std::move(order));
+        gateway->Push(std::move(command));
         sells++;
         //std::cout << "\033[2J\033[H" << std::flush;
         //exchange->PrintBook();
@@ -50,13 +54,33 @@ void dummy_start_orders(Exchange* exchange){
 }
 
 int main(int argc, const char * argv[]) {
+    Gateway gateway;
     OrderManager orderManager;
     OrderBook orderBook;
     Exchange exchange(orderBook, orderManager);
-    
-    Exchange* exchangeptr = &exchange;
+    std::thread agents_thread(dummy_start_orders, &exchange, &gateway);
 
-    dummy_start_orders(exchangeptr);
+    //dummy_start_orders(exchangeptr, gatewayptr);
+    CommandPtr command;
+    while (agents_thread.joinable()){
+        
+        
+        while (gateway.Pop(command)){
+            switch (command->type){
+                case CommandType::PlaceOrder:
+                    exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
+                    break;
+//                case CommandType::ModifyOrder:
+//                    orderManager.ModifyOrder(std::move(std::get<OrderPtr>(command->payload)));
+//                    Not implemented yet, skip this type
+//                    break;
+                case CommandType::CancelOrder:
+                    exchange.CancelOrder(std::get<OrderID>(command->payload));
+                    break;
+            }
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
+        }
+    }
 
     orderBook.PrintOrderBook();
 

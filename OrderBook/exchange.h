@@ -13,7 +13,7 @@ public:
     orderBook{orderBook}
     {}
     
-//    void dummyAddOrder(std::unique_ptr<Order> order) {
+//    void dummyAddOrder(OrderPtr order) {
 //        Price price = order->GetPrice();
 //        //Quantity quantity = order->GetQuantity();
 //        Side side = order->GetSide();
@@ -35,7 +35,7 @@ public:
 //        orderManager.AddOrder(std::move(order));
 //    }
     
-    void AddOrder(std::unique_ptr<Order> order) {
+    void AddOrder(OrderPtr order) {
         Order* rawOrder = order.get();
         //OrderID orderID = rawOrder->GetOrderID();
         Price price = rawOrder->GetPrice();
