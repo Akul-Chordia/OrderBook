@@ -28,6 +28,7 @@ void dummy_start_orders(Exchange* exchange, Gateway* gateway){
         auto order = std::make_unique<Order>(id, price, qty, OrderType::Limit, side, ts);
         auto command = std::make_unique<Command>(order);
         //exchange->AddOrder(std::move(order));
+        std::cout<< "command pushed";
         gateway->Push(std::move(command));
         buys++;
         //std::cout << "\033[2J\033[H" << std::flush;
@@ -59,16 +60,20 @@ int main(int argc, const char * argv[]) {
     OrderBook orderBook;
     Exchange exchange(orderBook, orderManager);
     std::thread agents_thread(dummy_start_orders, &exchange, &gateway);
+    std::cout << "thread started";
 
     //dummy_start_orders(exchangeptr, gatewayptr);
     CommandPtr command;
     while (agents_thread.joinable()){
         
         
-        while (gateway.Pop(command)){
+        
+        while (true){
+            gateway.WaitAndPop(command);
             switch (command->type){
                 case CommandType::PlaceOrder:
                     exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
+                    std::cout << "order added";
                     break;
 //                case CommandType::ModifyOrder:
 //                    orderManager.ModifyOrder(std::move(std::get<OrderPtr>(command->payload)));
@@ -78,7 +83,7 @@ int main(int argc, const char * argv[]) {
                     exchange.CancelOrder(std::get<OrderID>(command->payload));
                     break;
             }
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            //std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
     }
 

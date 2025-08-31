@@ -6,14 +6,14 @@ struct Command {
     CommandType type;
     std::variant<OrderPtr, OrderID> payload;
     
-    explicit Command(OrderPtr orderptr)
+    explicit Command(OrderPtr& orderptr)
         :type(CommandType::PlaceOrder),
         payload(std::move(orderptr))
     {}
 
     explicit Command(OrderID orderID)
         :type(CommandType::CancelOrder),
-        payload(std::move(orderID))
+        payload(orderID)
     {}
 };
 
@@ -23,6 +23,7 @@ class Gateway{
 private:
     std::queue<CommandPtr> gateway;
     mutable std::mutex gateway_mutex;
+    std::condition_variable cv;
 public:
     Gateway() = default;
     Gateway(const Gateway&) = delete;
@@ -31,16 +32,14 @@ public:
     void Push(CommandPtr command){
         std::lock_guard<std::mutex> lock(gateway_mutex);
         gateway.push(std::move(command));
+        cv.notify_one();
     }
     
-    bool Pop(CommandPtr& command){
-        std::lock_guard<std::mutex> lock(gateway_mutex);
-        if (gateway.empty()){
-            return false;
-        }
+    void WaitAndPop(CommandPtr& command){
+        std::unique_lock<std::mutex> lock(gateway_mutex);
+        cv.wait(lock, [this] { return !gateway.empty(); });
         command = std::move(gateway.front());
         gateway.pop();
-        return true;
     }
     
     bool IsEmpty(){
