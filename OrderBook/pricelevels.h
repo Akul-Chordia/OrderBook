@@ -19,7 +19,11 @@ public:
     {}
     
     Price GetPrice() const { return price;}
-    Quantity GetQuantity() const { return totalQuantity;}
+    Quantity GetQuantity() const {
+        if (totalQuantity<0){
+            throw std::logic_error("Negative quantity");  // this should never happen
+        }
+        return totalQuantity;}
     OrderIDs& GetOrderIDs() { return orderIDs;}
     std::size_t GetOrderCount() const { return orderIDs.size(); }
 
@@ -30,6 +34,15 @@ public:
         totalQuantity += orderPtr->GetRemainingQuantity();
     }
 
+    void RemoveOrder(Order* orderPtr, Quantity restingOrderQuantity) {
+        auto it = orderIDMap.find(orderPtr->GetOrderID());
+        if (it != orderIDMap.end()) {
+            totalQuantity -= restingOrderQuantity;
+            orderIDs.erase(it->second);
+            orderIDMap.erase(it);
+        }
+    }
+    
     void RemoveOrder(Order* orderPtr) {
         auto it = orderIDMap.find(orderPtr->GetOrderID());
         if (it != orderIDMap.end()) {

@@ -33,6 +33,9 @@ int main(int argc, const char * argv[]) {
         gateway.WaitAndPop(command);
         switch (command->type){
             case CommandType::PlaceOrder:
+                if (std::get<OrderPtr>(command->payload) == nullptr){
+                    throw std::logic_error("the order is a nullptr?");
+                }
                 exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
                 std::cout << "order_added ";
                 break;

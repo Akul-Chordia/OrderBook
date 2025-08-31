@@ -6,6 +6,7 @@
 class Agent {
 private:
     int agentID;
+    int counter = 0;
     Gateway& gateway;
     std::thread agent_thread;
     std::atomic<bool>& flag;
@@ -43,10 +44,10 @@ private:
             // Generate random order details
             //Price price = std::round(price_dist(rng) * 100.0/100);
             Quantity quantity = qty_dist(rng);
-            Side side = (!(rng() % 3 == 0)) ? Side::Buy : Side::Sell;
-            Price price = (rng() % 3 == 0) ? std::round(price_dist(rng))*100 : std::round(price_dist2(rng))*100;
-            OrderID order_id = (static_cast<OrderID>(agentID) << 32) | std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
+            Side side = (!(rng() % 2 == 0)) ? Side::Buy : Side::Sell;
+            Price price = (rng() % 2 == 0) ? std::round(price_dist(rng))*100 : std::round(price_dist2(rng))*100;
+            OrderID order_id = (static_cast<OrderID>(agentID) << 8)| counter;
+            counter++;
             auto order = std::make_unique<Order>(order_id, price, quantity, OrderType::Limit, side);
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));

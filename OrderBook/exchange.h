@@ -18,6 +18,10 @@ public:
         //OrderID orderID = rawOrder->GetOrderID();
         Price price = rawOrder->GetPrice();
         Quantity quantity = rawOrder->GetQuantity();
+        Quantity rqty = rawOrder->GetRemainingQuantity();
+        if (quantity<=0){
+            throw std::logic_error("order quantity -ve this shouldn't happen");
+        }
         Side side = rawOrder->GetSide();
         OrderType ordertype = rawOrder->GetOrderType();
         
@@ -54,7 +58,7 @@ public:
                         orderPtr->Fill(restingOrderQuantity);
                         order->Fill(restingOrderQuantity);
                         quantity -= restingOrderQuantity;
-                        bestAskLevel.RemoveOrder(orderPtr);
+                        bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
@@ -77,7 +81,7 @@ public:
                         orderPtr->Fill(restingOrderQuantity);
                         order->Fill(restingOrderQuantity);
                         quantity -= restingOrderQuantity;
-                        bestBidLevel.RemoveOrder(orderPtr);
+                        bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
@@ -112,7 +116,7 @@ public:
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
-                            bestAskLevel.RemoveOrder(orderPtr);
+                            bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                             //std::cout << "order_matched_a";
                         } else {
                             orderPtr->Fill(quantity);
@@ -148,9 +152,12 @@ public:
                         Quantity restingOrderQuantity = orderPtr->GetRemainingQuantity();
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
+                            if(!(orderPtr->GetOrderStatus() == OrderStatus::Filled)){
+                                throw std::logic_error("This order should be filled");
+                            }
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
-                            bestBidLevel.RemoveOrder(orderPtr);
+                            bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
@@ -234,7 +241,7 @@ public:
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
-                            bestAskLevel.RemoveOrder(orderPtr);
+                            bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
@@ -261,7 +268,7 @@ public:
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
-                            bestBidLevel.RemoveOrder(orderPtr);
+                            bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
