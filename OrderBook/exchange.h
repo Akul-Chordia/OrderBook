@@ -13,28 +13,6 @@ public:
     orderBook{orderBook}
     {}
     
-//    void dummyAddOrder(OrderPtr order) {
-//        Price price = order->GetPrice();
-//        //Quantity quantity = order->GetQuantity();
-//        Side side = order->GetSide();
-//        
-//        if (side == Side::Buy) {
-//            auto it = orderBook.bids.find(price);
-//            if (it == orderBook.bids.end()) {
-//                orderBook.bids.emplace(price, PriceLevel(price));
-//            }
-//            orderBook.bids.at(price).AddOrder(order.get());
-//        } else {
-//            auto it = orderBook.asks.find(price);
-//            if (it == orderBook.asks.end()) {
-//                orderBook.asks.emplace(price, PriceLevel(price));
-//            }
-//            orderBook.asks.at(price).AddOrder(order.get());
-//        }
-//        
-//        orderManager.AddOrder(std::move(order));
-//    }
-    
     void AddOrder(OrderPtr order) {
         Order* rawOrder = order.get();
         //OrderID orderID = rawOrder->GetOrderID();
