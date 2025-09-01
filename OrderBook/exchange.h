@@ -18,7 +18,7 @@ public:
         //OrderID orderID = rawOrder->GetOrderID();
         Price price = rawOrder->GetPrice();
         Quantity quantity = rawOrder->GetQuantity();
-        Quantity rqty = rawOrder->GetRemainingQuantity();
+        //Quantity rqty = rawOrder->GetRemainingQuantity();
         if (quantity<=0){
             throw std::logic_error("order quantity -ve this shouldn't happen");
         }
@@ -115,12 +115,18 @@ public:
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
+                            std::cout << "\n" << order->GetOrderID() << " bought " << restingOrderQuantity << " from " <<
+                            orderPtr->GetOrderID() << " @ " <<
+                                orderPtr->GetPrice();
                             quantity -= restingOrderQuantity;
                             bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                             //std::cout << "order_matched_a";
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            std::cout << "\n" << order->GetOrderID() << " bought " << quantity << " from " <<
+                            orderPtr->GetOrderID() << " @ " <<
+                                orderPtr->GetPrice();
                             bestAskLevel.PartialFill(quantity);
                             quantity = 0;
                             //std::cout << "order_matched_b";
@@ -152,15 +158,18 @@ public:
                         Quantity restingOrderQuantity = orderPtr->GetRemainingQuantity();
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
-                            if(!(orderPtr->GetOrderStatus() == OrderStatus::Filled)){
-                                throw std::logic_error("This order should be filled");
-                            }
+                            std::cout << "\n" << order->GetOrderID() << " sold " << restingOrderQuantity << " from " <<
+                            orderPtr->GetOrderID() << " @ " <<
+                                orderPtr->GetPrice();
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
                             bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            std::cout << "\n" << order->GetOrderID() << " sold " << quantity << " from " <<
+                            orderPtr->GetOrderID() << " @ " <<
+                                orderPtr->GetPrice();
                             bestBidLevel.PartialFill(quantity);
                             quantity = 0;
                         }

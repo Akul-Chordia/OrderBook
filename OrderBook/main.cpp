@@ -29,15 +29,18 @@ int main(int argc, const char * argv[]) {
     
     CommandPtr command;
     int i = 0;
-    while (i<1000){
+    while (i<100000){
         gateway.WaitAndPop(command);
         switch (command->type){
             case CommandType::PlaceOrder:
                 if (std::get<OrderPtr>(command->payload) == nullptr){
                     throw std::logic_error("the order is a nullptr?");
                 }
+                std::cout << "\norder added : " << std::get<OrderPtr>(command->payload)->GetOrderID() << " " << std::get<OrderPtr>(command->payload)->GetPrice() << " " <<
+                static_cast<int>(std::get<OrderPtr>(command->payload)->GetSide()) << " " <<
+                    std::get<OrderPtr>(command->payload)->GetQuantity() ;
                 exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
-                std::cout << "order_added ";
+                //std::cout << "order_added ";
                 break;
 //                case CommandType::ModifyOrder:
 //                    orderManager.ModifyOrder(std::move(std::get<OrderPtr>(command->payload)));
@@ -47,10 +50,12 @@ int main(int argc, const char * argv[]) {
                 exchange.CancelOrder(std::get<OrderID>(command->payload));
                 break;
         }
-        std::cout << "\033[2J\033[H" << std::flush;
-        orderBook.PrintOrderBook();
+        //std::cout << "\033[2J\033[H" << std::flush;
+        //orderBook.PrintOrderBook();
         i++;
     }
+    
+    std::cout << "loop without errors";
     
     flag = false;
     agentManager.join_all();

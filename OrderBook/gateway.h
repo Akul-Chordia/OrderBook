@@ -31,7 +31,11 @@ public:
     
     void Push(CommandPtr command){
         std::lock_guard<std::mutex> lock(gateway_mutex);
+        std::cout << "\norder pushed : " << std::get<OrderPtr>(command->payload)->GetOrderID() << " " << std::get<OrderPtr>(command->payload)->GetPrice() << " " <<
+        static_cast<int>(std::get<OrderPtr>(command->payload)->GetSide()) << " " <<
+            std::get<OrderPtr>(command->payload)->GetQuantity() ;
         gateway.push(std::move(command));
+        
         cv.notify_one();
     }
     

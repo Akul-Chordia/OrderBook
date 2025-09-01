@@ -51,7 +51,7 @@ private:
             auto order = std::make_unique<Order>(order_id, price, quantity, OrderType::Limit, side);
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
-            std::cout << "order_placed by " << agentID << " ";
+            //std::cout << "order_placed by " << agentID << " ";
 
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 50));
         }
