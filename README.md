@@ -23,19 +23,34 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ├── orderManager.h      # Tracks all live orders
 ├── priceLevel.h        # Stores and manages orders at a specific price
 ├── orderBook.h         # End orderbook
+├── gateway.h           # FIFO thread-safe queue 
 ├── exchange.h          # Core matching engine
 ├── trades.h            # Trades history
-
-├── agents.h/hft.h      # Future implementation
+├── agents.h            # Multi-threaded agents
 
 ```
+
+## Photos
+### CLI
+
+<table align="center">
+   <tr>
+    <td align="center"> <img src="https://github.com/user-attachments/assets/73fcfc0b-e4f6-4a6c-be2c-316da6e91039" alt="debugging mode" width="400"/></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/bea60dba-2a85-438c-acc5-ec0ff41b9827" alt="orderbook" width="425"/></td>
+  </tr>
+  <tr>
+    <td align="center" width="400" style="border:none;">debugging mode</td>
+    <td align="center" width="400" style="border:none;">orderbook</td>
+  </tr>
+</table>
+
+
 
 ## In Progress
 
 Currently working on a **large-scale market simulation**:
 
-* **1000 simulated agents** placing and cancelling orders concurrently.
-* Each agent will have a **custom artificial network latency**, affecting how quickly their orders hit the book.
+
 * **HFT threads** with significantly lower latency will operate alongside, exploiting their speed advantage.
 * Goal: **demonstrate how latency impacts order execution quality** and market dynamics.
 
