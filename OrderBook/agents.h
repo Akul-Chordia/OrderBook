@@ -46,7 +46,7 @@ private:
             Quantity quantity = qty_dist(rng);
             Side side = (!(rng() % 2 == 0)) ? Side::Buy : Side::Sell;
             Price price = (rng() % 2 == 0) ? std::round(price_dist(rng))*100 : std::round(price_dist2(rng))*100;
-            OrderID order_id = (static_cast<OrderID>(agentID) << 8)| counter;
+            OrderID order_id = (static_cast<OrderID>(agentID) << 56)| counter;
             counter++;
             auto order = std::make_unique<Order>(order_id, price, quantity, OrderType::Limit, side);
             auto command = std::make_unique<Command>(order);
