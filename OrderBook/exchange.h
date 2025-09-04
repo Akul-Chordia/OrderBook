@@ -115,18 +115,20 @@ public:
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
-                            std::cout << "\n" << order->GetOrderID() << " bought " << restingOrderQuantity << " from " <<
-                            orderPtr->GetOrderID() << " @ " <<
-                                orderPtr->GetPrice();
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), restingOrderQuantity));
+//                            std::cout << "\n" << order->GetOrderID() << " bought " << restingOrderQuantity << " from " <<
+//                            orderPtr->GetOrderID() << " @ " <<
+//                                orderPtr->GetPrice();
                             quantity -= restingOrderQuantity;
                             bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                             //std::cout << "order_matched_a";
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
-                            std::cout << "\n" << order->GetOrderID() << " bought " << quantity << " from " <<
-                            orderPtr->GetOrderID() << " @ " <<
-                                orderPtr->GetPrice();
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), quantity));
+//                            std::cout << "\n" << order->GetOrderID() << " bought " << quantity << " from " <<
+//                            orderPtr->GetOrderID() << " @ " <<
+//                                orderPtr->GetPrice();
                             bestAskLevel.PartialFill(quantity);
                             quantity = 0;
                             //std::cout << "order_matched_b";
@@ -158,18 +160,20 @@ public:
                         Quantity restingOrderQuantity = orderPtr->GetRemainingQuantity();
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
-                            std::cout << "\n" << order->GetOrderID() << " sold " << restingOrderQuantity << " from " <<
-                            orderPtr->GetOrderID() << " @ " <<
-                                orderPtr->GetPrice();
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Sell, orderPtr->GetPrice(), restingOrderQuantity));
+//                            std::cout << "\n" << order->GetOrderID() << " sold " << restingOrderQuantity << " to " <<
+//                            orderPtr->GetOrderID() << " @ " <<
+//                                orderPtr->GetPrice();
                             order->Fill(restingOrderQuantity);
                             quantity -= restingOrderQuantity;
                             bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
-                            std::cout << "\n" << order->GetOrderID() << " sold " << quantity << " from " <<
-                            orderPtr->GetOrderID() << " @ " <<
-                                orderPtr->GetPrice();
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Sell, orderPtr->GetPrice(), quantity));
+//                            std::cout << "\n" << order->GetOrderID() << " sold " << quantity << " to " <<
+//                            orderPtr->GetOrderID() << " @ " <<
+//                                orderPtr->GetPrice();
                             bestBidLevel.PartialFill(quantity);
                             quantity = 0;
                         }
@@ -249,11 +253,13 @@ public:
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), restingOrderQuantity));
                             quantity -= restingOrderQuantity;
                             bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), quantity));
                             bestAskLevel.PartialFill(quantity);
                             quantity = 0;
                         }
@@ -276,11 +282,13 @@ public:
                         if (quantity >= restingOrderQuantity){
                             orderPtr->Fill(restingOrderQuantity);
                             order->Fill(restingOrderQuantity);
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Sell, orderPtr->GetPrice(), restingOrderQuantity));
                             quantity -= restingOrderQuantity;
                             bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                         } else {
                             orderPtr->Fill(quantity);
                             order->Fill(quantity);
+                            trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), quantity));
                             bestBidLevel.PartialFill(quantity);
                             quantity = 0;
                         }
