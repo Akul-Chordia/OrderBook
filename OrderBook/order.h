@@ -25,6 +25,17 @@ public:
         orderStatus{OrderStatus::New}
     {}
     
+    Order(OrderID orderID, Quantity quantity, OrderType orderType, Side side, TimeStamp timestamp = std::chrono::steady_clock::now().time_since_epoch())
+        :orderID{orderID},
+        price{INVALID},
+        quantity{quantity},
+        remainingQuantity{quantity},
+        orderType{orderType},
+        side{side},
+        timestamp{timestamp},
+        orderStatus{OrderStatus::New}
+    {}
+    
     OrderID GetOrderID() const { return orderID; }
     Price GetPrice() const { return price; }
     Quantity GetQuantity() const { return quantity; }

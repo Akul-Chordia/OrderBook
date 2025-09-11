@@ -7,6 +7,7 @@
 #include "gateway.h"
 #include "trades.h"
 #include "exchange.h"
+#include "agentmanager.h"
 #include "agents.h"
 #include "hft.h"
 #include "testdummyorders.h"
@@ -16,11 +17,11 @@ int main(int argc, const char * argv[]) {
     Gateway gateway;
     OrderManager orderManager;
     OrderBook orderBook;
-    Exchange exchange(orderBook, orderManager);
-    
+    Trades trades;
+    Exchange exchange(orderBook, orderManager, trades);
     std::atomic<bool> flag(true);
     const int numberOfAgents = 200;
-    AgentManager agentManager(numberOfAgents, gateway, flag);
+    AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;
     agentManager.StartAll();
     
@@ -30,7 +31,7 @@ int main(int argc, const char * argv[]) {
     
     CommandPtr command;
     int i = 0;
-    while (i<100000){
+    while (i<10000){
         gateway.WaitAndPop(command);
         switch (command->type){
             case CommandType::PlaceOrder:
@@ -84,6 +85,12 @@ int main(int argc, const char * argv[]) {
                 break;
         }
     }
+//    std::cout << "\033[2J\033[H" << std::flush;
+//    orderBook.PrintOrderBook();
+//    
+//    OrderPtr neworder = std::make_unique<Order>(999299292922, 100, OrderType::Market, Side::Buy);
+//    CommandPtr cmd = std::make_unique<Command>(neworder);
+//    exchange.AddOrder(std::move(std::get<OrderPtr>(cmd->payload)));
     
     std::cout << "\033[2J\033[H" << std::flush;
     orderBook.PrintOrderBook();

@@ -33,7 +33,6 @@ public:
 };
 
 using Trades = std::vector<Trade>;
-Trades trades;
 
 void print_trades(const Trades& trades){
     for (const auto& trade : trades) {

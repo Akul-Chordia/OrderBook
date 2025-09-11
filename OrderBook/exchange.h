@@ -6,11 +6,13 @@ class Exchange{
 private:
     OrderBook& orderBook;
     OrderManager& orderManager;
+    Trades& trades;
     
 public:
-    explicit Exchange(OrderBook& orderBook, OrderManager& orderManager)
+    explicit Exchange(OrderBook& orderBook, OrderManager& orderManager, Trades& trades)
     :orderManager{orderManager},
-    orderBook{orderBook}
+    orderBook{orderBook},
+    trades{trades}
     {}
     
     void AddOrder(OrderPtr order) {
@@ -57,11 +59,13 @@ public:
                     if (quantity >= restingOrderQuantity){
                         orderPtr->Fill(restingOrderQuantity);
                         order->Fill(restingOrderQuantity);
+                        trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), restingOrderQuantity));
                         quantity -= restingOrderQuantity;
                         bestAskLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
+                        trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Buy, orderPtr->GetPrice(), quantity));
                         bestAskLevel.PartialFill(quantity);
                         quantity = 0;
                     }
@@ -80,11 +84,13 @@ public:
                     if (quantity >= restingOrderQuantity){
                         orderPtr->Fill(restingOrderQuantity);
                         order->Fill(restingOrderQuantity);
+                        trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Sell, orderPtr->GetPrice(), restingOrderQuantity));
                         quantity -= restingOrderQuantity;
                         bestBidLevel.RemoveOrder(orderPtr, restingOrderQuantity);
                     } else {
                         orderPtr->Fill(quantity);
                         order->Fill(quantity);
+                        trades.emplace_back(Trade(order->GetOrderID(), orderPtr->GetOrderID(), Side::Sell, orderPtr->GetPrice(), quantity));
                         bestBidLevel.PartialFill(quantity);
                         quantity = 0;
                     }
