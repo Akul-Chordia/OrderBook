@@ -62,16 +62,4 @@ public:
     void Rejected(){
         orderStatus = OrderStatus::Rejected;
     }
-    
-    void Modify(Price price = INVALID, Quantity quantity = INVALID, OrderType orderType = OrderType::INVALID, Side side = Side::INVALID){
-        if (price != INVALID){ this->price = price; }
-        if (quantity != INVALID){
-            this->quantity = quantity;
-            remainingQuantity = quantity;
-        }
-        if (orderType != OrderType::INVALID){ this->orderType = orderType; }
-        if (side != Side::INVALID){ this->side = side; }
-        timestamp = std::chrono::steady_clock::now().time_since_epoch();
-        orderStatus = OrderStatus::New;
-    }
 };

@@ -20,13 +20,5 @@ public:
         auto it = orders.find(orderID);
         return (it != orders.end()) ? it->second.get() : nullptr;
     }
-
-    bool ModifyOrder(OrderID orderID, Price price = INVALID, Quantity quantity = INVALID,
-                     OrderType orderType = OrderType::INVALID, Side side = Side::INVALID) {
-        Order* orderPtr = GetOrder(orderID);
-        if (!orderPtr) return false;
-        orderPtr->Modify(price, quantity, orderType, side);
-        return true;
-    }
 };
 

@@ -42,10 +42,10 @@ int main(int argc, const char * argv[]) {
 //                    std::get<OrderPtr>(command->payload)->GetQuantity() ;
                 exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
                 break;
-//            case CommandType::ModifyOrder:
-//                orderManager.ModifyOrder(std::move(std::get<OrderPtr>(command->payload)));
-//                Not implemented yet, skip this type
-//                break;
+            case CommandType::ModifyOrder:{
+                ModifyOrderPayload& payload = std::get<ModifyOrderPayload>(command->payload);
+                exchange.ModifyOrder(payload.orderID, payload.newPrice, payload.newQuantity);
+                break;}
             case CommandType::CancelOrder:
                 exchange.CancelOrder(std::get<OrderID>(command->payload));
                 break;

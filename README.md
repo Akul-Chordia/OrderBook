@@ -27,6 +27,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ├── exchange.h          # Core matching engine
 ├── trades.h            # Trades history
 ├── agents.h            # Multi-threaded agents
+├── agentmanager.h      # Manages agents agents
 
 ```
 

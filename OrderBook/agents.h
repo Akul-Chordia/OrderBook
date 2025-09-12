@@ -2,8 +2,6 @@
 //  agents.h
 //  OrderBook
 //
-
-
 class Agent {
 protected:
     int agentID;
@@ -51,7 +49,7 @@ protected:
 };
 
 
-class RandomAgent : public Agent{
+class RetailAgent : public Agent{
 public:
     using Agent::Agent;
 private:
@@ -73,7 +71,7 @@ private:
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 800 + 200));
         }
     }
 };
@@ -94,7 +92,7 @@ private:
             //auto command = std::make_unique<Command>(order);
             //gateway.Push(std::move(command));
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 800 + 200));
         }
     }
 };
@@ -141,24 +139,4 @@ private:
     }
 };
 
-class RetailAgent : public Agent{
-public:
-    using Agent::Agent;
-private:
-    void run() {
-        while (flag) {
-            // Generate random order details
-//            Quantity quantity = qty_dist(rng);
-//            Side side = (!(rng() % 2 == 0)) ? Side::Buy : Side::Sell;
-//            Price price = (rng() % 2 == 0) ? price_dist1(rng)*100.0 : price_dist2(rng)*100.0;
-            OrderID order_id = GenerateOrderID();
-            counter++;
-            //auto order = std::make_unique<Order>(order_id, price, quantity, OrderType::Limit, side);
-            //auto command = std::make_unique<Command>(order);
-            //gateway.Push(std::move(command));
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 50));
-        }
-    }
-};
 

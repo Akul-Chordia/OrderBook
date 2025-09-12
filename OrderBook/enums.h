@@ -31,7 +31,7 @@ enum class AgentType{
 
 enum class CommandType{
     PlaceOrder,
-    //ModifyOrder,
+    ModifyOrder,
     CancelOrder
 };
 

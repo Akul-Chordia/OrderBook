@@ -338,6 +338,23 @@ public:
         }
     }
     
+    void ModifyOrder(OrderID orderID, Price newPrice, Quantity newQuantity){
+        Order* order = orderManager.GetOrder(orderID);
+        if (order) {
+            OrderPtr newOrder = std::make_unique<Order>(
+                order->GetOrderID(),
+                newPrice,
+                newQuantity,
+                order->GetOrderType(),
+                order->GetSide(),
+                std::chrono::steady_clock::now().time_since_epoch()
+            );
+        
+            CancelOrder(orderID);
+            AddOrder(std::move(newOrder));
+        }
+    }
+    
     void PrintBook(){
         orderBook.PrintOrderBook();
     }

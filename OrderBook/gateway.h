@@ -2,9 +2,15 @@
 //  gateway.h
 //  OrderBook
 //
+struct ModifyOrderPayload {
+    OrderID orderID;
+    Price newPrice;
+    Quantity newQuantity;
+};
+
 struct Command {
     CommandType type;
-    std::variant<OrderPtr, OrderID> payload;
+    std::variant<OrderPtr, OrderID, ModifyOrderPayload> payload;
     
     explicit Command(OrderPtr& orderptr)
         :type(CommandType::PlaceOrder),
@@ -15,6 +21,12 @@ struct Command {
         :type(CommandType::CancelOrder),
         payload(orderID)
     {}
+    
+    explicit Command(OrderID orderID, Price price, Quantity quantity)
+        : type(CommandType::ModifyOrder)
+    {
+        payload.emplace<ModifyOrderPayload>(orderID, price, quantity);
+    }
 };
 
 using CommandPtr = std::unique_ptr<Command>;
