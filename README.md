@@ -36,7 +36,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 <table align="center">
    <tr>
     <td align="center"> <img src="https://github.com/user-attachments/assets/73fcfc0b-e4f6-4a6c-be2c-316da6e91039" alt="debugging mode" width="400"/></td>
-    <td align="center"><img src="https://github.com/user-attachments/assets/bea60dba-2a85-438c-acc5-ec0ff41b9827" alt="orderbook" width="425"/></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/1969db5b-66dd-42b1-92bb-706234f38bdf" alt="orderbook" width="560"/></td>
   </tr>
   <tr>
     <td align="center" width="400" style="border:none;">debugging mode</td>
