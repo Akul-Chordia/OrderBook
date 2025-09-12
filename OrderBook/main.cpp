@@ -7,9 +7,8 @@
 #include "gateway.h"
 #include "trades.h"
 #include "exchange.h"
-#include "agentmanager.h"
 #include "agents.h"
-#include "hft.h"
+#include "agentmanager.h"
 #include "testdummyorders.h"
 
 
@@ -31,7 +30,7 @@ int main(int argc, const char * argv[]) {
     
     CommandPtr command;
     int i = 0;
-    while (i<10000){
+    while (flag || !gateway.IsEmpty()){
         gateway.WaitAndPop(command);
         switch (command->type){
             case CommandType::PlaceOrder:
@@ -52,50 +51,27 @@ int main(int argc, const char * argv[]) {
                 break;
         }
         
-        if (i%1000==0){
+        i++;
+        if (i==10000){
+            std::cout << "\nTurning off agents\n";
+            flag = false;
+            agentManager.join_all();
+        }
+        
+        if (i%100==0){
             std::cout << "\033[2J\033[H" << std::flush;
             orderBook.PrintOrderBook();
         }
-        i++;
     }
-    
-    std::cout << "\nTurning off agents\n";
-    
-    flag = false;
-    agentManager.join_all();
-    
-    while (!gateway.IsEmpty()) {
-        gateway.WaitAndPop(command);
-        switch (command->type){
-            case CommandType::PlaceOrder:
-                if (std::get<OrderPtr>(command->payload) == nullptr){
-                    throw std::logic_error("the order is a nullptr?");
-                }
-//                std::cout << "\norder added : " << std::get<OrderPtr>(command->payload)->GetOrderID() << " " << std::get<OrderPtr>(command->payload)->GetPrice() << " " <<
-//                static_cast<int>(std::get<OrderPtr>(command->payload)->GetSide()) << " " <<
-//                    std::get<OrderPtr>(command->payload)->GetQuantity() ;
-                exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
-                break;
-//            case CommandType::ModifyOrder:
-//                orderManager.ModifyOrder(std::move(std::get<OrderPtr>(command->payload)));
-//                Not implemented yet, skip this type
-//                break;
-            case CommandType::CancelOrder:
-                exchange.CancelOrder(std::get<OrderID>(command->payload));
-                break;
-        }
-    }
+
 //    std::cout << "\033[2J\033[H" << std::flush;
 //    orderBook.PrintOrderBook();
 //    
 //    OrderPtr neworder = std::make_unique<Order>(999299292922, 100, OrderType::Market, Side::Buy);
 //    CommandPtr cmd = std::make_unique<Command>(neworder);
 //    exchange.AddOrder(std::move(std::get<OrderPtr>(cmd->payload)));
-    
-    std::cout << "\033[2J\033[H" << std::flush;
-    orderBook.PrintOrderBook();
 //
-//    return 0;
+    return 0;
 
 }
 

@@ -2,6 +2,55 @@
 //  agents.h
 //  OrderBook
 //
+
+
+class Agent {
+protected:
+    int agentID;
+    int counter = 0;
+    Gateway& gateway;
+    const OrderBook& orderbook;
+    const Trades& trades;
+    std::thread agent_thread;
+    std::atomic<bool>& flag;
+    std::mt19937 rng;
+public:
+    Agent(int agentID, Gateway& gateway, const OrderBook& orderbook, const Trades& trades, std::atomic<bool>& flag)
+    :agentID{agentID},
+    gateway{gateway},
+    orderbook{orderbook},
+    trades{trades},
+    flag{flag},
+    rng(static_cast<unsigned>(agentID) + std::chrono::high_resolution_clock::now().time_since_epoch().count())
+    {}
+
+    Agent(const Agent&) = delete;
+    Agent& operator=(const Agent&) = delete;
+    
+    virtual ~Agent() {
+        join();
+    }
+
+    void start() {
+       agent_thread = std::thread(&Agent::run, this);
+    }
+
+    void join() {
+       if (agent_thread.joinable()) {
+           agent_thread.join();
+       }
+    }
+
+protected:
+
+    virtual void run() = 0;
+    
+    OrderID GenerateOrderID(){
+        return ((static_cast<OrderID>(agentID) << 56) | counter);
+    }
+};
+
+
 class RandomAgent : public Agent{
 public:
     using Agent::Agent;

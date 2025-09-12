@@ -47,15 +47,22 @@ public:
 
     void PrintOrderBook() {
         std::cout << "\n======= ORDER BOOK =======\n";
+        std::cout << std::fixed << std::setprecision(2);
         for (auto it = asks.rbegin(); it != asks.rend(); ++it) {
             const auto& [price, level] = *it;
-            std::cout << price/100.0f << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/4), '|');
-            std::cout << level.GetQuantity() << "\n";
+            std::cout << price/100.0f << " ";
+            for (std::size_t i = 0; i < static_cast<std::size_t>(level.GetQuantity() / 4); ++i) {
+                std::cout << "█";
+            }
+            std::cout << " " << level.GetQuantity() << "\n";
         }
         PrintSpread();
         for (const auto& [price, level] : bids) {
-            std::cout << price/100.0f << " " << std::string(static_cast<std::size_t>(level.GetQuantity()/4), '|');
-            std::cout << level.GetQuantity() << "\n";
+            std::cout << price/100.0f << " ";
+            for (std::size_t i = 0; i < static_cast<std::size_t>(level.GetQuantity() / 4); ++i) {
+                std::cout << "█";
+            }
+            std::cout << " " << level.GetQuantity() << "\n";
         }
     }
 };
