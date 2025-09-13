@@ -11,22 +11,7 @@
 #include "agentmanager.h"
 #include "testdummyorders.h"
 
-
-int main(int argc, const char * argv[]) {
-    Gateway gateway;
-    OrderManager orderManager;
-    OrderBook orderBook;
-    Trades trades;
-    Exchange exchange(orderBook, orderManager, trades);
-    std::atomic<bool> flag(true);
-    
-    const int numberOfAgents[5] = {100,5,1,0,0};              //Retail, HFT, TWAP(buy-pressure), unimplemented agents
-    AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
-    
-    std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;
-    agentManager.StartAll();
-    
-    
+void RunSimulation(Exchange& exchange, Gateway& gateway, AgentManager& agentManager, std::atomic<bool>& flag){
     CommandPtr command;
     int i = 0;
     while (flag || !gateway.IsEmpty()){
@@ -36,9 +21,9 @@ int main(int argc, const char * argv[]) {
                 if (std::get<OrderPtr>(command->payload) == nullptr){
                     throw std::logic_error("the order is a nullptr?");
                 }
-//                std::cout << "\norder added : " << std::get<OrderPtr>(command->payload)->GetOrderID() << " " << std::get<OrderPtr>(command->payload)->GetPrice() << " " <<
-//                static_cast<int>(std::get<OrderPtr>(command->payload)->GetSide()) << " " <<
-//                    std::get<OrderPtr>(command->payload)->GetQuantity() ;
+                //                std::cout << "\norder added : " << std::get<OrderPtr>(command->payload)->GetOrderID() << " " << std::get<OrderPtr>(command->payload)->GetPrice() << " " <<
+                //                static_cast<int>(std::get<OrderPtr>(command->payload)->GetSide()) << " " <<
+                //                    std::get<OrderPtr>(command->payload)->GetQuantity() ;
                 exchange.AddOrder(std::move(std::get<OrderPtr>(command->payload)));
                 break;
             case CommandType::ModifyOrder:{
@@ -56,20 +41,32 @@ int main(int argc, const char * argv[]) {
             flag = false;
             agentManager.join_all();
         }
-        
-        if (i%50==0){
-            std::cout << "\033[2J\033[H" << std::flush;
-            orderBook.PrintOrderBook();
-        }
     }
+};
 
-//    std::cout << "\033[2J\033[H" << std::flush;
-//    orderBook.PrintOrderBook();
-//    
 
-//
+int main(int argc, const char * argv[]) {
+    Gateway gateway;
+    OrderManager orderManager;
+    OrderBook orderBook;
+    Trades trades;
+    Exchange exchange(orderBook, orderManager, trades);
+    std::atomic<bool> flag(true);
+    
+    const int numberOfAgents[5] = {100,5,1,0,0};// {Retail, HFT, TWAP(buy-pressure), unimplemented agents}
+    AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
+    
+    std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;
+    agentManager.StartAll();
+
+    std::thread simulationThread(RunSimulation, std::ref(exchange), std::ref(gateway), std::ref(agentManager), std::ref(flag));
+    
+    simulationThread.join();
+
+    std::cout << "\033[2J\033[H" << std::flush;
+    orderBook.PrintOrderBook();
+
     return 0;
-
 }
 
 
