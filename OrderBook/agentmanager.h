@@ -6,9 +6,16 @@ class AgentManager {
 private:
     std::vector<std::unique_ptr<Agent>> agents;
 public:
-    AgentManager(int numberOfAgents, Gateway& gateway, const OrderBook& orderbook, const Trades& trades, std::atomic<bool>& flag){
-        for(int i = 0; i<numberOfAgents; i++){
-            agents.emplace_back(std::make_unique<RetailAgent>(i+1, gateway, orderbook, trades, flag));
+    AgentManager(const int* numberOfAgents, Gateway& gateway, const OrderBook& orderBook, const Trades& trades, std::atomic<bool>& flag){
+        int agentID = 0;
+        for(int i = 0; i<numberOfAgents[0]; i++){
+            agents.emplace_back(std::make_unique<RetailAgent>(++agentID, gateway, orderBook, trades, flag));
+        }
+        for(int i = 0; i<numberOfAgents[1]; i++){
+            agents.emplace_back(std::make_unique<HFTAgent>(++agentID, gateway, orderBook, trades, flag));
+        }
+        for(int i = 0; i<numberOfAgents[2]; i++){
+            agents.emplace_back(std::make_unique<TWAPAgent>(++agentID, gateway, orderBook, trades, flag));
         }
     }
     
