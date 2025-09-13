@@ -19,14 +19,13 @@ int main(int argc, const char * argv[]) {
     Trades trades;
     Exchange exchange(orderBook, orderManager, trades);
     std::atomic<bool> flag(true);
-    const int numberOfAgents = 200;
+    
+    const int numberOfAgents[5] = {100,5,1,0,0};              //Retail, HFT, TWAP(buy-pressure), unimplemented agents
     AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
+    
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;
     agentManager.StartAll();
     
-    
-    //std::thread agents_thread(dummy_start_orders, &exchange, &gateway);
-    //dummy_start_orders(exchangeptr, gatewayptr);
     
     CommandPtr command;
     int i = 0;
@@ -58,7 +57,7 @@ int main(int argc, const char * argv[]) {
             agentManager.join_all();
         }
         
-        if (i%100==0){
+        if (i%50==0){
             std::cout << "\033[2J\033[H" << std::flush;
             orderBook.PrintOrderBook();
         }
@@ -67,9 +66,7 @@ int main(int argc, const char * argv[]) {
 //    std::cout << "\033[2J\033[H" << std::flush;
 //    orderBook.PrintOrderBook();
 //    
-//    OrderPtr neworder = std::make_unique<Order>(999299292922, 100, OrderType::Market, Side::Buy);
-//    CommandPtr cmd = std::make_unique<Command>(neworder);
-//    exchange.AddOrder(std::move(std::get<OrderPtr>(cmd->payload)));
+
 //
     return 0;
 

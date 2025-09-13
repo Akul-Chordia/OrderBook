@@ -21,23 +21,23 @@ public:
         return bids.begin()->second;
     }
     
-    Price BestAsk(){
+    Price BestAsk() const {
         return asks.begin()->first;
     }
     
-    Price BestBid(){
+    Price BestBid() const {
         return bids.begin()->first;
     }
     
-    bool AsksEmpty(){
+    bool AsksEmpty() const {
         return asks.empty();
     }
     
-    bool BidsEmpty(){
+    bool BidsEmpty() const {
         return bids.empty();
     }
     
-    void PrintSpread(){
+    void PrintSpread() const {
         if (AsksEmpty() or BidsEmpty()){
             std::cout << "===== ∞ bips =====\n";
         } else {
@@ -45,10 +45,14 @@ public:
         }
     }
 
-    void PrintOrderBook() {
+    void PrintOrderBook() const {
         std::cout << "\n======= ORDER BOOK =======\n";
         std::cout << std::fixed << std::setprecision(2);
-        for (auto it = asks.rbegin(); it != asks.rend(); ++it) {
+        
+        auto start_it = asks.begin();
+        std::advance(start_it, std::min(static_cast<size_t>(25), asks.size()));
+
+        for (auto it = std::make_reverse_iterator(start_it); it != asks.rend(); ++it) {
             const auto& [price, level] = *it;
             std::cout << price/100.0f << " ";
             for (std::size_t i = 0; i < static_cast<std::size_t>(level.GetQuantity() / 4); ++i) {
@@ -56,13 +60,20 @@ public:
             }
             std::cout << " " << level.GetQuantity() << "\n";
         }
+
         PrintSpread();
+        
+        int count = 0;
         for (const auto& [price, level] : bids) {
+            if (count >= 25) {
+                break;
+            }
             std::cout << price/100.0f << " ";
             for (std::size_t i = 0; i < static_cast<std::size_t>(level.GetQuantity() / 4); ++i) {
                 std::cout << "█";
             }
             std::cout << " " << level.GetQuantity() << "\n";
+            count++;
         }
     }
 };

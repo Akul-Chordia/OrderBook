@@ -3,7 +3,7 @@
 //  OrderBook
 //
 
-using OrderIDs = std::deque<OrderID>;
+using OrderIDs = std::list<OrderID>;
 using OrderIDMap = std::unordered_map<OrderID, OrderIDs::iterator>;
 
 class PriceLevel{
