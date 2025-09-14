@@ -23,6 +23,10 @@ public:
         spotPrice = price;
     };
     
+    const Price GetSpotPrice() const {
+        return price;
+    }
+    
     void Print() const {
         if (side == Side::Buy){
             std::cout << agressorOrderID << " bought " << quantity << "@" << price << " on " << timestamp << " from " << sittingOrderID << "\n";
@@ -34,9 +38,14 @@ public:
 
 using Trades = std::vector<Trade>;
 
-void print_trades(const Trades& trades){
+void PrintTrades(const Trades& trades){
     for (const auto& trade : trades) {
         trade.Print();
     }
 };
 
+void SpotPrices(const Trades& trades){
+    for (const auto& trade : trades) {
+        std::cout << trade.GetSpotPrice();
+    }
+};
