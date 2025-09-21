@@ -36,6 +36,7 @@
 /* Begin PBXFileReference section */
 		CF5ACA562E7D45EF007364F4 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		CF5ACA582E7D461D007364F4 /* libglfw.3.4.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.4.dylib; path = ../../../../opt/homebrew/Cellar/glfw/3.4/lib/libglfw.3.4.dylib; sourceTree = "<group>"; };
+		CF80B61F2E8099B2001F5A26 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		CFCC6C122E1C4B06000B48A0 /* OrderBook */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OrderBook; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFF54A502E4C790200643038 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -73,6 +74,7 @@
 		CFCC6C092E1C4B06000B48A0 = {
 			isa = PBXGroup;
 			children = (
+				CF80B61F2E8099B2001F5A26 /* LICENSE.txt */,
 				CFF54A502E4C790200643038 /* README.md */,
 				CFCC6C142E1C4B06000B48A0 /* OrderBook */,
 				CF5ACA552E7D45EF007364F4 /* Frameworks */,
