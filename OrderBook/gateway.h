@@ -51,11 +51,15 @@ public:
         cv.notify_one();
     }
     
-    void WaitAndPop(CommandPtr& command){
+    bool WaitAndPop(CommandPtr& command){
         std::unique_lock<std::mutex> lock(gateway_mutex);
-        cv.wait(lock, [this] { return !gateway.empty(); });
-        command = std::move(gateway.front());
-        gateway.pop();
+        if (cv.wait_for(lock, std::chrono::milliseconds(100), [this]{return !gateway.empty();})){
+            command = std::move(gateway.front());
+            gateway.pop();
+            return true;
+        } else {
+            return false;
+        }
     }
     
     bool IsEmpty(){

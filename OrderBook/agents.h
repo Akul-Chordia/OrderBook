@@ -135,7 +135,7 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 100000;
+    Quantity totalQuantityToExecute = 60000;
     std::chrono::seconds totalDuration = std::chrono::minutes(5);
     int numOrders = 200;
 

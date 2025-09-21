@@ -17,3 +17,11 @@
 #include <queue>
 #include <condition_variable> 
 #include <iomanip>
+
+//GUI
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
+#include <implot/implot.h>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>

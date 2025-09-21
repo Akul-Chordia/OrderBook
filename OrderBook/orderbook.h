@@ -29,6 +29,14 @@ public:
         return bids.begin()->first;
     }
     
+    const Asks& GetAsks() const {
+        return asks;
+    }
+    
+    const Bids& GetBids() const {
+        return bids;
+    }
+    
     bool AsksEmpty() const {
         return asks.empty();
     }
