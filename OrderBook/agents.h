@@ -96,7 +96,7 @@ public:
     using Agent::Agent;
 private:
     void run() {
-        std::uniform_int_distribution<int> qty_dist(5, 20);
+        std::uniform_int_distribution<int> qty_dist(5, 10);
 
         while (flag) {
             if (!orderBook.BidsEmpty() && !orderBook.AsksEmpty()) {
@@ -135,7 +135,7 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 25000;
+    Quantity totalQuantityToExecute = 50000;
     std::chrono::seconds totalDuration = std::chrono::minutes(5);
     int numOrders = 500;
 
@@ -155,7 +155,7 @@ private:
             if (!flag) break;
             OrderID order_id = GenerateOrderID();
             counter++;
-            auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, Side::Buy);
+            auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, Side::Sell);
             gateway.Push(std::make_unique<Command>(order));
 
             std::this_thread::sleep_for(timeInterval);
