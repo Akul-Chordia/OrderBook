@@ -1,15 +1,14 @@
 # C++ Order Book from Scratch
 
-A fully custom implementation of an order book in C++, supporting multiple order types and designed for speed and extensibility.  
+A full C++ simulation of the market with a custom implementation of an orderbook simulating real market dynamics with various multi-threaded agents
 Built entirely from scratch — no external trading libraries — with a focus on realistic exchange-style behavior.
 
 ## Features
 
-- **Limit Orders** – Rest in the book until matched or canceled.
-- **Market Orders** – Execute immediately against the best available price levels.
-- **Fill-or-Kill (FOK)** – Execute in full immediately or cancel entirely.
-- **Immediate-or-Cancel (IOC)** – Execute immediately for the available quantity, cancel any remainder.
+- **Different Order Types** – Limit, Market, Fill-or-Kill, Immediate-or-Cancel order types.
 - **Custom Matching Engine** – Price-time priority with separate bid and ask books.
+- **Different Multi-Threaded Agent Types** – Retail Agents, HFT (market makers) Agents, TWAP (buy/sell pressure) Agents.
+- **GUI visualization** – ImGUI interface for orderbook, historical chart, order panel and agent control.
 - **Memory-Safe Design** – Uses smart pointers (`std::unique_ptr`) for order storage.
 - **High level of Abstraction** – Distinct classes for order management, price levels, and matching logic.
 
@@ -28,6 +27,13 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ├── trades.h            # Trades history
 ├── agents.h            # Multi-threaded agents
 ├── agentmanager.h      # Manages agents agents
+├── snapshot.h          # Double Buffer for lock-free GUI
+├── gui.h               # GUI class
+├── windows.h           # GUI windows
+├── lib   
+        ├── glad
+        ├── imgui
+        ├── implot
 
 ```
 
@@ -63,16 +69,14 @@ Built entirely from scratch — no external trading libraries — with a focus o
 
 ## In Progress
 
-Currently working on a **large-scale market simulation**:
+Currently working on **simulating various major market events**:
 
-
-* **HFT threads** with significantly lower latency will operate alongside, exploiting their speed advantage.
 * Goal: **demonstrate how latency impacts order execution quality** and market dynamics.
+* Goal: adding more agents, improving simulation to match real markets.
+
 
 This will involve:
 
-* Multi-threaded architecture using `std::thread` and synchronization primitives.
-* Event-driven simulation loop with per-agent latencies.
 * Performance metrics: execution time, fill rates, and P\&L comparisons.
 
 ## License
