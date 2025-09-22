@@ -96,7 +96,7 @@ public:
     using Agent::Agent;
 private:
     void run() {
-        std::uniform_int_distribution<int> qty_dist(50, 100);
+        std::uniform_int_distribution<int> qty_dist(5, 20);
 
         while (flag) {
             if (!orderBook.BidsEmpty() && !orderBook.AsksEmpty()) {
@@ -135,9 +135,9 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 60000;
+    Quantity totalQuantityToExecute = 25000;
     std::chrono::seconds totalDuration = std::chrono::minutes(5);
-    int numOrders = 200;
+    int numOrders = 500;
 
 public:
     using Agent::Agent;

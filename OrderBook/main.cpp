@@ -11,7 +11,7 @@
 #include "agentmanager.h"
 #include "snapshot.h"
 #include "gui.h"
-#include "charts.h"
+#include "windows.h"
 //#include "testdummyorders.h"
 
 void RunSimulation(Exchange& exchange, Gateway& gateway, AgentManager& agentManager, DataBuffer& dataBuffer, std::atomic<bool>& flag){
@@ -73,7 +73,7 @@ int main(int argc, const char * argv[]) {
     DataBuffer dataBuffer;
     std::atomic<bool> flag(true);
     
-    const int numberOfAgents[5] = {100,10,1,0,0};// {Retail, HFT, TWAP(buy-pressure), unimplemented agents}
+    const int numberOfAgents[5] = {300,10,1,0,0};// {Retail, HFT, TWAP(buy-pressure), unimplemented agents}
     AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
     
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;

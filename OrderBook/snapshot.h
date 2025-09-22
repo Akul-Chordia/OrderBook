@@ -20,17 +20,17 @@ struct Snapshot {
 class DataBuffer {
 private:
     Snapshot dataBuffers[2];
-    std::atomic<int> BufferIndex;
+    std::atomic<int> bufferIndex;
 
 public:
     DataBuffer()
-    : BufferIndex{0}
+    : bufferIndex{0}
     {}
 
     void Write(const OrderBook& orderBook){
-        int currentIndex = BufferIndex.load(std::memory_order_relaxed);
-        Snapshot& snapshot = dataBuffers[currentIndex];
+        int writeIndex = 1 - bufferIndex.load(std::memory_order_relaxed);
         
+        Snapshot& snapshot = dataBuffers[writeIndex];
         snapshot.clear();
 
         for (const auto& [price, level] : orderBook.GetAsks()) {
@@ -39,12 +39,12 @@ public:
         for (const auto& [price, level] : orderBook.GetBids()) {
             snapshot.bids.emplace_back(price, level.GetQuantity());
         }
+        
+        bufferIndex.store(writeIndex, std::memory_order_release);
     }
 
     const Snapshot Read(){
-        int currentIndex = BufferIndex.load(std::memory_order_relaxed);
-        int nextIndex = 1 - currentIndex;
-        BufferIndex.store(nextIndex, std::memory_order_relaxed);
+        int currentIndex = bufferIndex.load(std::memory_order_acquire);
         return dataBuffers[currentIndex];
     }
 };

@@ -2,12 +2,44 @@
 //  gui.h
 //  OrderBook
 //
+struct ScrollingBuffer{
+    static const int MaxSize = 4000;
+    int Offset;
+    std::vector<ImVec2> Data;
+
+    ScrollingBuffer() {
+        Offset = 0;
+        Data.reserve(MaxSize);
+    }
+
+    void AddPoint(const float x, const float y) {
+        if (Data.size() < MaxSize)
+            Data.push_back(ImVec2(x, y));
+        else {
+            Data[Offset] = ImVec2(x, y);
+            Offset = (Offset + 1) % MaxSize;
+        }
+    }
+
+    void Erase() {
+        if (Data.size() > 0) {
+            Data.clear();
+            Offset = 0;
+        }
+    }
+};
+
+
 class GUI{
 private:
     DataBuffer& dataBuffer;
     Gateway& gateway;
     std::atomic<bool>& flag;
     GLFWwindow* window = nullptr;
+    
+    ScrollingBuffer AskHistory;
+    ScrollingBuffer BidHistory;
+    
 public:
     GUI(DataBuffer& dataBuffer, Gateway& gateway, std::atomic<bool>& flag)
     : dataBuffer(dataBuffer),
@@ -81,7 +113,13 @@ private:
         flag = false;
     }
     
-    void DrawUI();
+    void OrderBookVisualization(const Snapshot& snapshot);
+    void Debug(const Snapshot& snapshot);
     
+    void DrawUI(){
+        const Snapshot& snapshot = dataBuffer.Read();
+        OrderBookVisualization(snapshot);
+        Debug(snapshot);
+    }
 };
 
