@@ -40,6 +40,13 @@ private:
     ScrollingBuffer AskHistory;
     ScrollingBuffer BidHistory;
     
+    Price price;
+    Quantity quantity;
+    Side side;
+    OrderType orderType;
+    
+    Price bestAsk = 100, bestBid = 100, midPrice;
+    
 public:
     GUI(DataBuffer& dataBuffer, Gateway& gateway, std::atomic<bool>& flag)
     : dataBuffer(dataBuffer),
@@ -115,11 +122,13 @@ private:
     
     void OrderBookVisualization(const Snapshot& snapshot);
     void Debug(const Snapshot& snapshot);
+    void SendOrder(Gateway& gateway);
     
     void DrawUI(){
         const Snapshot& snapshot = dataBuffer.Read();
         OrderBookVisualization(snapshot);
         Debug(snapshot);
+        SendOrder(gateway);
     }
 };
 

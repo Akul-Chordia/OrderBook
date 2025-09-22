@@ -43,3 +43,10 @@ using SpotPrice = std::int32_t;
 SpotPrice spotPrice= 100;
 constexpr std::int32_t INVALID = std::numeric_limits<std::int32_t>::min();
 
+namespace ImGui{
+    template <typename T>
+    typename std::enable_if<std::is_enum<T>::value, bool>::type
+    RadioButton(const char* label, T* v, T v_button){
+        return RadioButton(label, reinterpret_cast<int*>(v), static_cast<int>(v_button));
+    }
+}

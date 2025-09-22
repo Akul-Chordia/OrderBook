@@ -7,7 +7,7 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    //ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
     
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
     
@@ -22,6 +22,23 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
     
     static int visible_max_price_cents = 110;
     static int visible_min_price_cents = 90;
+    Quantity max_volume = 1;
+    
+    static float time = 0;
+    time += ImGui::GetIO().DeltaTime;
+    
+    if (!snapshot.bids.empty()){
+        bestBid = snapshot.bids.front().first;
+        for (const auto& [price, qty] : snapshot.bids) if (qty > max_volume) max_volume = qty;
+        BidHistory.AddPoint(time, snapshot.bids.front().first / 100.0f);
+    }
+    if (!snapshot.asks.empty()){
+        bestAsk = snapshot.asks.front().first;
+        for (const auto& [price, qty] : snapshot.asks) if (qty > max_volume) max_volume = qty;
+        AskHistory.AddPoint(time, snapshot.asks.front().first / 100.0f);
+    }
+    
+    midPrice = (bestAsk+bestBid)/2;
     
     if (!snapshot.bids.empty() && !snapshot.asks.empty()){
         
@@ -32,16 +49,9 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
         static const ImU32 bid_color = IM_COL32(100, 255, 100, 255);
         static const ImU32 ask_color = IM_COL32(255, 100, 100, 255);
         
-        Quantity max_volume = 1;
-        for (const auto& [price, qty] : snapshot.bids) if (qty > max_volume) max_volume = qty;
-        for (const auto& [price, qty] : snapshot.asks) if (qty > max_volume) max_volume = qty;
-        Price best_bid = snapshot.bids.front().first;
-        Price best_ask = snapshot.asks.front().first;
-        Price mid_price = (best_ask + best_bid) / 2;
-
         // DRAW BIDS
         for (const auto& [price, qty] : snapshot.bids) {
-            float price_offset_ticks = static_cast<float>(mid_price - price) / price_tick_size;
+            float price_offset_ticks = static_cast<float>(midPrice - price) / price_tick_size;
             float y_pos = center_y + (price_offset_ticks * price_level_height);
             if (y_pos > screen_height) break;
             float bar_width = (static_cast<float>(qty) / max_volume) * max_bar_width_pixels;
@@ -49,13 +59,13 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
         }
         
         // DRAW SPREAD & MID-LINE
-        draw_list->AddRectFilled(ImVec2(0, center_y + static_cast<float>(mid_price - best_bid) * price_level_height / price_tick_size), ImVec2(screen_width, center_y + static_cast<float>(mid_price - best_ask) * price_level_height / price_tick_size), IM_COL32(255, 255, 255, 20));
+        draw_list->AddRectFilled(ImVec2(0, center_y + static_cast<float>(midPrice - bestBid) * price_level_height / price_tick_size), ImVec2(screen_width, center_y + static_cast<float>(midPrice - bestAsk) * price_level_height / price_tick_size), IM_COL32(255, 255, 255, 20));
         draw_list->AddRectFilled(ImVec2(0, center_y + 0.5), ImVec2(screen_width, center_y - 0.5), IM_COL32(255, 255, 255, 100));
 
         // DRAW ASKS
         for (auto it = snapshot.asks.begin(); it != snapshot.asks.end(); ++it) {
             const auto& [price, qty] = *it;
-            float price_offset_ticks = static_cast<float>(price - mid_price) / price_tick_size;
+            float price_offset_ticks = static_cast<float>(price - midPrice) / price_tick_size;
             float y_pos = center_y - price_level_height - (price_offset_ticks * price_level_height);
             if (y_pos < 0) break;
             float bar_width = (static_cast<float>(qty) / max_volume) * max_bar_width_pixels;
@@ -64,23 +74,14 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
         
         float ticks_in_half_screen = (screen_height / 2.0f) / price_level_height;
         float price_range_cents = ticks_in_half_screen * price_tick_size;
-        visible_max_price_cents = mid_price + price_range_cents;
-        visible_min_price_cents = mid_price - price_range_cents;
+        visible_max_price_cents = midPrice + price_range_cents;
+        visible_min_price_cents = midPrice - price_range_cents;
     }{
         float plot_width = screen_width - (max_bar_width_pixels);
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
-        //ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
         ImGui::BeginChild("PricePlot", ImVec2(plot_width, viewport->WorkSize.y), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        static float time = 0;
-        time += ImGui::GetIO().DeltaTime;
-
-        if (!snapshot.bids.empty()) {
-            BidHistory.AddPoint(time, snapshot.bids.front().first / 100.0f);
-        }
-        if (!snapshot.asks.empty()) {
-            AskHistory.AddPoint(time, snapshot.asks.front().first / 100.0f);
-        }
 
         if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1, -1), ImPlotFlags_NoFrame | ImPlotFlags_NoLegend | ImPlotFlags_NoInputs)) {
             ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
@@ -97,13 +98,13 @@ void GUI::OrderBookVisualization(const Snapshot& snapshot){
             ImPlot::EndPlot();
         }
         ImGui::EndChild();
-        //ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
         ImGui::PopStyleVar();
     }
 
     ImGui::End();
     ImGui::PopStyleVar();
-    //ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
 }
 
 
@@ -115,15 +116,47 @@ void GUI::Debug(const Snapshot& snapshot){
     ImGui::Text("Snapshot Bids Count: %zu", snapshot.bids.size());
     ImGui::Text("Snapshot Asks Count: %zu", snapshot.asks.size());
     ImGui::Separator();
-    ImGui::Text("Bid History Size: %zu", BidHistory.Data.size());
-    ImGui::Text("Ask History Size: %zu", AskHistory.Data.size());
-    ImGui::Separator();
-    if (!snapshot.bids.empty()) {
-        ImGui::Text("Best Bid: %.2f", snapshot.bids.front().first / 100.0f);
-    }
-    if (!snapshot.asks.empty()) {
-        ImGui::Text("Best Ask: %.2f", snapshot.asks.front().first / 100.0f);
-    }
-    ImGui::Text("Mid Price: %.2f", (snapshot.bids.front().first + snapshot.asks.front().first)/200.0f);
+    ImGui::Text("Best Bid: %.2f", bestBid / 100.0f);
+    ImGui::Text("Best Ask: %.2f", bestAsk / 100.0f);
+    ImGui::Text("Mid Price: %.2f", midPrice/100.0f);
     ImGui::End();
 }
+
+
+void GUI::SendOrder(Gateway& gateway){
+    ImGui::Begin("Send Order");
+    ImGui::InputScalar("Price", ImGuiDataType_U32, &price);
+    ImGui::InputScalar("Quantity", ImGuiDataType_U32, &quantity);
+    static OrderID orderIDcounter = 1'000'000'000;
+    
+    ImGui::RadioButton("Market", &orderType, OrderType::Market);
+    ImGui::SameLine();
+    ImGui::RadioButton("Limit", &orderType, OrderType::Limit);
+    
+    if (ImGui::Button("Buy")){
+        if (orderType == OrderType::Market){
+            auto order = std::make_unique<Order>(orderIDcounter++, quantity, OrderType::Market, Side::Buy);
+            auto command = std::make_unique<Command>(order);
+            gateway.Push(std::move(command));
+        } else {
+            auto order = std::make_unique<Order>(orderIDcounter++, price, quantity, OrderType::Limit, Side::Buy);
+            auto command = std::make_unique<Command>(order);
+            gateway.Push(std::move(command));
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Sell")){
+        if (orderType == OrderType::Market){
+            auto order = std::make_unique<Order>(orderIDcounter++, quantity, OrderType::Market, Side::Sell);
+            auto command = std::make_unique<Command>(order);
+            gateway.Push(std::move(command));
+        } else {
+            auto order = std::make_unique<Order>(orderIDcounter++, price, quantity, OrderType::Limit, Side::Sell);
+            auto command = std::make_unique<Command>(order);
+            gateway.Push(std::move(command));
+        }
+    }
+    ImGui::End();
+}
+
+
