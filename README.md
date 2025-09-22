@@ -32,6 +32,20 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ```
 
 ## Photos
+
+
+### GUI
+
+<table align="center">
+   <tr>
+    <td align="center"> <img width="1569" height="1069" alt="image" src="https://github.com/user-attachments/assets/6b7d686d-6b7e-4480-8b11-e6cb8b13fa0c" alt="graphical interface"/></td>
+  </tr>
+  <tr>
+    <td align="center" width="400" style="border:none;">graphical interface</td>
+  </tr>
+</table>
+
+
 ### CLI
 
 <table align="center">
