@@ -125,8 +125,8 @@ void GUI::Debug(const Snapshot& snapshot){
 
 void GUI::SendOrder(Gateway& gateway){
     ImGui::Begin("Send Order");
-    ImGui::InputScalar("Price", ImGuiDataType_U32, &price);
-    ImGui::InputScalar("Quantity", ImGuiDataType_U32, &quantity);
+    ImGui::InputScalar("Price", ImGuiDataType_S64, &price);
+    ImGui::InputScalar("Quantity", ImGuiDataType_S64, &quantity);
     static OrderID orderIDcounter = 1'000'000'000;
     
     ImGui::RadioButton("Market", &orderType, OrderType::Market);
@@ -139,7 +139,7 @@ void GUI::SendOrder(Gateway& gateway){
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
         } else {
-            auto order = std::make_unique<Order>(orderIDcounter++, price, quantity, OrderType::Limit, Side::Buy);
+            auto order = std::make_unique<Order>(orderIDcounter++, price*100, quantity, OrderType::Limit, Side::Buy);
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
         }

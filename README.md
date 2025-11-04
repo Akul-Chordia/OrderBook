@@ -16,7 +16,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 
 ```
 ├── main.cpp            # Entry point
-├── emuns.h             # Type abstraction
+├── enums.h             # Type abstraction
 ├── includes.h          # All includes
 ├── order.h             # Order class (data structure and types)
 ├── orderManager.h      # Tracks all live orders
@@ -26,7 +26,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 ├── exchange.h          # Core matching engine
 ├── trades.h            # Trades history
 ├── agents.h            # Multi-threaded agents
-├── agentmanager.h      # Manages agents agents
+├── agentmanager.h      # Manages agents
 ├── snapshot.h          # Double Buffer for lock-free GUI
 ├── gui.h               # GUI class
 ├── windows.h           # GUI windows
