@@ -6,6 +6,8 @@ class Agent {
 protected:
     int agentID;
     int counter = 0;
+    Quantity position = 0;
+    size_t lastTradeIndexProcessed = 0;
     Gateway& gateway;
     const OrderBook& orderBook;
     const Trades& trades;
@@ -50,6 +52,36 @@ protected:
     Price RoundToTick(Price price, Price tickSize) {
         return std::round(static_cast<double>(price) / tickSize) * tickSize;
     }
+    
+    inline int GetAgentIDFromOrderID(OrderID orderID) {
+        return (orderID >> 52);
+    }
+    
+    void UpdatePositionFromTrade(const Trade& trade) {
+        if (GetAgentIDFromOrderID(trade.GetAggressorOrderID()) == agentID) {
+            position += (trade.GetSide() == Side::Buy) ? trade.GetQuantity() : -trade.GetQuantity();
+        } else if (GetAgentIDFromOrderID(trade.GetSittingOrderID()) == agentID) {
+            position += (trade.GetSide() == Side::Buy) ? -trade.GetQuantity() : trade.GetQuantity();
+        }
+    }
+        
+    void ProcessNewTrades() {
+        size_t currentTradeCount = trades.GetTradeCount();
+        if (currentTradeCount > lastTradeIndexProcessed) {
+            for (size_t i = lastTradeIndexProcessed; i < currentTradeCount; ++i) {
+                try {
+                    Trade trade = trades.GetTrade(i);
+                    UpdatePositionFromTrade(trade);
+                } catch (const std::out_of_range& e) {
+                    throw std::logic_error("Trades mismatch");
+                    break;
+                }
+            }
+            lastTradeIndexProcessed = currentTradeCount;
+        }
+    }
+    
+    
 };
 
 
@@ -62,17 +94,11 @@ private:
         std::uniform_int_distribution<int> qty_dist(1, 20);
         std::normal_distribution<double> price_offset_dist(0, 4.0);
         const Price tickSize = 5;
-
+        Price referencePrice = 10000;
         
         while (flag) {
-            Price referencePrice = 10000;
-            if (!orderBook.BidsEmpty() && !orderBook.AsksEmpty()) {
-                referencePrice = orderBook.BestBid() + (orderBook.BestAsk() - orderBook.BestBid()) / 2;
-            } else if (!orderBook.BidsEmpty()) {
-                referencePrice = orderBook.BestBid();
-            } else if (!orderBook.AsksEmpty()) {
-                referencePrice = orderBook.BestAsk();
-            }
+            ProcessNewTrades();
+            referencePrice = trades.GetLastSpotPrice();
             Quantity quantity = qty_dist(rng);
             Side side = (!(rng() % 2 == 0)) ? Side::Buy : Side::Sell;
             Price price = referencePrice+price_offset_dist(rng)*100.0;
@@ -92,6 +118,7 @@ class HFTAgent : public Agent{
 private:
     OrderID lastBidID = 0;
     OrderID lastAskID = 0;
+    Quantity quantity = 0;
 public:
     using Agent::Agent;
 private:
@@ -99,6 +126,7 @@ private:
         std::uniform_int_distribution<int> qty_dist(5, 10);
 
         while (flag) {
+            ProcessNewTrades();
             if (!orderBook.BidsEmpty() && !orderBook.AsksEmpty()) {
                 Price bestBid = orderBook.BestBid();
                 Price bestAsk = orderBook.BestAsk();
@@ -115,19 +143,24 @@ private:
                 Price newBidPrice = bestBid + 1;
                 Price newAskPrice = bestAsk - 1;
                 Quantity quantity = qty_dist(rng);
-
-                lastBidID = GenerateOrderID();
-                counter++;
-                auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
-                auto bidCommand = std::make_unique<Command>(bidOrder);
-                gateway.Push(std::move(bidCommand));
                 
-                lastAskID = GenerateOrderID();
-                counter++;
-                auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
-                auto askCommand = std::make_unique<Command>(askOrder);
-                gateway.Push(std::move(askCommand));
+                if (position<300){
+                    lastBidID = GenerateOrderID();
+                    counter++;
+                    auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
+                    auto bidCommand = std::make_unique<Command>(bidOrder);
+                    gateway.Push(std::move(bidCommand));
+                }
+                if (position>-300){
+                    lastAskID = GenerateOrderID();
+                    counter++;
+                    auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
+                    auto askCommand = std::make_unique<Command>(askOrder);
+                    gateway.Push(std::move(askCommand));
+                }
             }
+            
+            //std::cout << agentID << " : " << position << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 80 + 40));
         }
     }
@@ -135,9 +168,9 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 50000;
-    std::chrono::seconds totalDuration = std::chrono::minutes(5);
-    int numOrders = 500;
+    Quantity totalQuantityToExecute = 20000;
+    std::chrono::seconds totalDuration = std::chrono::minutes(10);
+    int numOrders = 100;
 
 public:
     using Agent::Agent;
@@ -158,7 +191,7 @@ private:
             auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, Side::Sell);
             gateway.Push(std::make_unique<Command>(order));
 
-            std::this_thread::sleep_for(timeInterval);
+            std::this_thread::sleep_for(timeInterval + std::chrono::milliseconds(rng() % 80));
         }
     }
 };
