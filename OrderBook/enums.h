@@ -10,6 +10,7 @@ enum class OrderType{
     INVALID
 };
 
+
 enum class OrderStatus{
     New,
     PartiallyFilled ,
@@ -17,6 +18,7 @@ enum class OrderStatus{
     Cancelled,
     Rejected
 };
+
 
 enum class Side{
     Buy,
@@ -35,14 +37,18 @@ enum class CommandType{
     CancelOrder
 };
 
-using Price = std::int32_t;  // 1 -> $0.01    (10132 -> $101.32)
-using Quantity = std::uint32_t;
+
+using Price = std::int64_t;  // 1 -> $0.01    (10132 -> $101.32)
+using Quantity = std::int64_t;
 using OrderID = std::uint64_t;
 using TimeStamp = std::chrono::nanoseconds;
+
 using SpotPrice = std::int32_t;
-SpotPrice spotPrice= 100;
 constexpr std::int32_t INVALID = std::numeric_limits<std::int32_t>::min();
 
+
+// ImGui Helper
+// Template helper to allow ImGui::RadioButton to work directly with 'enum class' types
 namespace ImGui{
     template <typename T>
     typename std::enable_if<std::is_enum<T>::value, bool>::type
