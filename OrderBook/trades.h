@@ -72,11 +72,11 @@ public:
         return trades[current_count - 1].GetSpotPrice();
     }
 
-    std::vector<Price> GetLastSpotPrices(size_t count, std::vector<Price>& prices) const {
+    void GetLastSpotPrices(size_t count, std::vector<Price>& prices) const {
         size_t current_count = trade_count.load(std::memory_order_acquire);
 
         if (current_count == 0) {
-            return prices;
+            return;
         }
 
         size_t start = (current_count > count) ? (current_count - count) : 0;
@@ -85,7 +85,6 @@ public:
         for (size_t i = start; i < current_count; ++i) {
             prices.push_back(trades[i].GetSpotPrice());
         }
-        return prices;
     }
 
     size_t GetTradeCount() const {
