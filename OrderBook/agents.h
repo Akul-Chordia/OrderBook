@@ -142,38 +142,47 @@ class HFTAgent : public Agent{
 private:
     OrderID lastBidID = 0;
     OrderID lastAskID = 0;
-    Quantity quantity = 0;
-    std::vector<Price> prices;
     
-    int CalculateVolatility() {
+    // Realistic HFT parameters
+    const double maxLossLimit = -100000.0;     // Tighter stop-loss
+    const Quantity maxPosition = 200;          // Smaller inventory limits
+    const double maxAllowedVolatility = 80.0; // Pull quotes at high vol
+    
+    // Spread management (in ticks)
+    const double baseHalfSpread = 0.5;         // 1 tick total spread (very tight)
+    const double volSpreadAggression = 0.8;    // Widen by 0.8 ticks per unit vol
+    
+    // Inventory management
+    const double inventorySkewAggression = 0.1; // Skew 10 ticks per 100 contracts
+    
+    // Trend following
+    const double trendAggression = 1.5;         // Moderate trend following
+    
+    // Cold start handling
+    size_t minTradesForStartup = 500;
+    
+    std::pair<double, double> CalculateMarketState() {
         std::vector<Price> prices;
-        trades.GetLastSpotPrices(1000, prices);
-        std::cout << "[";
-        for(Price a:prices){
-            std::cout<<a<<",";
-        }
-        std::cout << "]";
-        if (prices.size() < 2) return 0;
+        trades.GetLastSpotPrices(500, prices);
+        
+        if (prices.size() < 2) return {0, 0};
         
         std::vector<double> logReturns;
         logReturns.reserve(prices.size() - 1);
-        
         for (size_t i = 1; i < prices.size(); ++i) {
             if (prices[i-1] == 0) continue;
             double ratio = static_cast<double>(prices[i]) / static_cast<double>(prices[i-1]);
-
             if (ratio <= 0) continue;
-
             double ret = std::log(ratio);
             logReturns.push_back(ret);
         }
-
-        if (logReturns.size() < 2) return 0;
-
+        
+        if (logReturns.size() < 2) return {0, 0};
+        
         double sum = 0.0;
         for (auto r : logReturns) sum += r;
         double mean = sum / logReturns.size();
-
+        
         double varSum = 0.0;
         for (auto r : logReturns) {
             double diff = r - mean;
@@ -182,63 +191,113 @@ private:
         double variance = varSum / (logReturns.size() - 1);
         double volatility = std::sqrt(variance);
         
-        return static_cast<int>(volatility * 10000);
+        if (prices.size() < minTradesForStartup) {
+            volatility *= 0.1;
+        }
+        return {volatility * 10000, mean * 10000};
+    }
+    
+    void CancelOldOrders() {
+        if (lastBidID != 0) {
+            gateway.Push(std::make_unique<Command>(lastBidID));
+            lastBidID = 0;
+        }
+        if (lastAskID != 0) {
+            gateway.Push(std::make_unique<Command>(lastAskID));
+            lastAskID = 0;
+        }
     }
     
 public:
     using Agent::Agent;
 
-    HFTAgent(int agentID, Gateway& gateway, const OrderBook& orderBook, const Trades& trades, std::atomic<bool>& flag)
-    : Agent(agentID, gateway, orderBook, trades, flag) {
-        //prices.reserve(100);
-    }
 private:
     void run() {
-        std::uniform_int_distribution<int> qty_dist(5, 10);
+        std::uniform_int_distribution<int> qty_dist(3, 8);  // Small size per order
+        
+        // Wait briefly for initial market formation
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         while (flag) {
             ProcessNewTrades();
-            if (!orderBook.BidsEmpty() && !orderBook.AsksEmpty()) {
-                Price bestBid = orderBook.BestBid();
-                Price bestAsk = orderBook.BestAsk();
-                
-                if (lastBidID != 0) {
-                    auto command = std::make_unique<Command>(lastBidID);
-                    gateway.Push(std::move(command));
-                }
-                if (lastAskID != 0) {
-                    auto command = std::make_unique<Command>(lastAskID);
-                    gateway.Push(std::move(command));
-                }
-                
-                if ((bestAsk - bestBid) > 2){
-                    Price newBidPrice = bestBid + 1;
-                    Price newAskPrice = bestAsk - 1;
-                    Quantity quantity = qty_dist(rng);
-                    
-                    if (position<300){
-                        lastBidID = GenerateOrderID();
-                        counter++;
-                        auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
-                        auto bidCommand = std::make_unique<Command>(bidOrder);
-                        gateway.Push(std::move(bidCommand));
-                    }
-                    if (position>-300){
-                        lastAskID = GenerateOrderID();
-                        counter++;
-                        auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
-                        auto askCommand = std::make_unique<Command>(askOrder);
-                        gateway.Push(std::move(askCommand));
-                    }
-                }
+            
+            if (orderBook.BidsEmpty() || orderBook.AsksEmpty()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                continue;
             }
             
-//            std::cout << std::left << std::setw(8) << "HFT"
-//                      << "ID: " << std::right << std::setw(5) << agentID
-//                      << " | Pos: " << std::right << std::setw(5) << position
-//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-//                      << std::endl;
-            std::cout << "\n" << CalculateVolatility() << std::endl;
+            CancelOldOrders();
+            
+            auto [volatility, trend] = CalculateMarketState();
+            double currentPnL = GetPnL(trades.GetLastSpotPrice());
+            
+            // PnL Stop-Loss
+            if (currentPnL < maxLossLimit) {
+                std::cout << "HFT     ID: " << std::setw(5) << agentID
+                         << " | STOPPED (PnL): " << currentPnL << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                continue;
+            }
+            
+            // Volatility circuit breaker
+            if (volatility > maxAllowedVolatility) {
+                std::cout << "HFT     ID: " << std::setw(5) << agentID
+                         << " | PULLED (VOL): " << volatility << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+            
+            Price bestBid = orderBook.BestBid();
+            Price bestAsk = orderBook.BestAsk();
+            Price midPrice = (bestBid + bestAsk) / 2;
+            
+            // Calculate fair price with inventory skew and trend
+            double inventorySkew = -position * inventorySkewAggression;
+            double trendSkew = trend * trendAggression;
+            Price ourFairPrice = midPrice + static_cast<Price>(inventorySkew + trendSkew);
+            
+            // Dynamic spread based on volatility
+            double volSpread = volatility * volSpreadAggression;
+            double halfSpread = baseHalfSpread + volSpread;
+            
+            // Final quotes
+            Price newBidPrice = ourFairPrice - static_cast<Price>(halfSpread);
+            Price newAskPrice = ourFairPrice + static_cast<Price>(halfSpread);
+            
+            // Safety checks
+            if (newBidPrice >= newAskPrice || newBidPrice >= bestAsk || newAskPrice <= bestBid) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+                continue;
+            }
+
+            Quantity quantity = qty_dist(rng);
+            
+            // Quote only if within position limits
+            if (position < maxPosition) {
+                lastBidID = GenerateOrderID();
+                counter++;
+                auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
+                gateway.Push(std::make_unique<Command>(bidOrder));
+            }
+            
+            if (position > -maxPosition) {
+                lastAskID = GenerateOrderID();
+                counter++;
+                auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
+                gateway.Push(std::make_unique<Command>(askOrder));
+            }
+            
+            std::cout << std::left << std::setw(8) << "HFT"
+                     << "ID: " << std::right << std::setw(5) << agentID
+                     << " | Pos: " << std::right << std::setw(5) << position
+                     << " | PnL: " << std::right << std::setw(12) << std::fixed
+                     << std::setprecision(2) << currentPnL
+                     << " | Vol: " << std::right << std::setw(5) << static_cast<int>(volatility)
+                     << " | Trend: " << std::right << std::setw(6) << std::fixed
+                     << std::setprecision(1) << trend
+                     << std::endl;
+            
+            // HFTs update quotes very frequently (40-120ms)
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 80 + 40));
         }
     }
@@ -246,15 +305,16 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 100000;
-    std::chrono::seconds totalDuration = std::chrono::minutes(10);
-    int numOrders = 3600;
+    Quantity totalQuantityToExecute = 50000;
+    std::chrono::seconds totalDuration = std::chrono::minutes(1);
+    int numOrders = 60;
+    Side side = Side::Sell;
 
 public:
     using Agent::Agent;
 private:
     void run() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
         if (numOrders == 0) return;
         
         Quantity quantityPerOrder = totalQuantityToExecute / numOrders;
@@ -263,24 +323,100 @@ private:
         auto timeInterval = std::chrono::duration_cast<std::chrono::milliseconds>(totalDuration) / numOrders;
         if (timeInterval.count() == 0) return;
 
-        for (int i = 0; i < numOrders; ++i) {
+        for (int i = 0; i < numOrders && flag; ++i) {
             ProcessNewTrades();
-            if (!flag) break;
             OrderID order_id = GenerateOrderID();
             counter++;
-            auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, Side::Sell);
+            auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, side);
             gateway.Push(std::make_unique<Command>(order));
             
-//            std::cout << std::left << std::setw(8) << "TWAPsell"
-//                      << "ID: " << std::right << std::setw(5) << agentID
-//                      << " | Pos: " << std::right << std::setw(5) << position
-//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-//                      << std::endl;
+            
+            std::cout << std::left << std::setw(8) << "TWAP"
+                      << "ID: " << std::right << std::setw(5) << agentID
+                      << " | Pos: " << std::right << std::setw(5) << position
+                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+                      << std::endl;
             std::this_thread::sleep_for(timeInterval + std::chrono::milliseconds(rng() % 80));
         }
     }
 };
 
+class MarketMakerAgent : public Agent{
+private:
+    OrderID lastBidID = 0;
+    OrderID lastAskID = 0;
+    
+    const Quantity maxPosition = 500;
+    const Price minSpreadToJoin = 3;
+    const double inventoryPenalty = 0.02;
+    
+    void CancelOldOrders() {
+        if (lastBidID != 0) {
+            gateway.Push(std::make_unique<Command>(lastBidID));
+            lastBidID = 0;
+        }
+        if (lastAskID != 0) {
+            gateway.Push(std::make_unique<Command>(lastAskID));
+            lastAskID = 0;
+        }
+    }
+    
+public:
+    using Agent::Agent;
+
+private:
+    void run() {
+        std::uniform_int_distribution<int> qty_dist(8, 15);
+
+        while (flag) {
+            ProcessNewTrades();
+            
+            if (orderBook.BidsEmpty() || orderBook.AsksEmpty()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+            
+            Price bestBid = orderBook.BestBid();
+            Price bestAsk = orderBook.BestAsk();
+            Price spread = bestAsk - bestBid;
+            
+            CancelOldOrders();
+            
+            
+            if (spread > minSpreadToJoin) {
+                Price newBidPrice = bestBid + 1;
+                Price newAskPrice = bestAsk - 1;
+                
+                Quantity baseQty = qty_dist(rng);
+                double inventoryFactor = 1.0 - std::abs(position) * inventoryPenalty / maxPosition;
+                inventoryFactor = std::max(0.3, std::min(1.0, inventoryFactor));
+                Quantity adjustedQty = static_cast<Quantity>(baseQty * inventoryFactor);
+                adjustedQty = std::max(static_cast<Quantity>(1), adjustedQty);
+                
+                if (position < maxPosition) {
+                    lastBidID = GenerateOrderID();
+                    counter++;
+                    auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, adjustedQty, OrderType::Limit, Side::Buy);
+                    gateway.Push(std::make_unique<Command>(bidOrder));
+                }
+                
+                if (position > -maxPosition) {
+                    lastAskID = GenerateOrderID();
+                    counter++;
+                    auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, adjustedQty, OrderType::Limit, Side::Sell);
+                    gateway.Push(std::make_unique<Command>(askOrder));
+                }
+            }
+            
+            std::cout << std::left << std::setw(8) << "MM"
+                      << "ID: " << std::right << std::setw(5) << agentID
+                      << " | Pos: " << std::right << std::setw(5) << position
+                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+                      << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 100));
+        }
+    }
+};
 
 class VWAPAgent : public Agent{
 public:
@@ -303,24 +439,132 @@ private:
     }
 };
 
-
 class MomentumAgent : public Agent{
+private:
+    const int lookbackPeriod = 100;
+    const double momentumThreshold = 50.0;
+    const Quantity maxPosition = 150;
+    const double stopLoss = -20000.0;
+    
+    enum class TrendState { NEUTRAL, UPTREND, DOWNTREND };
+    TrendState currentTrend = TrendState::NEUTRAL;
+    
+    double CalculateMomentum() {
+        std::vector<Price> prices;
+        trades.GetLastSpotPrices(lookbackPeriod, prices);
+        
+        if (prices.size() < lookbackPeriod) return 0.0;
+        
+        double sum = 0.0;
+        for (size_t i = 0; i < prices.size() - 1; ++i) {
+            sum += prices[i];
+        }
+        double avgPrice = sum / (prices.size() - 1);
+        double currentPrice = prices.back();
+        
+        return currentPrice - avgPrice;
+    }
+    
+    double CalculateRSI(int period = 14) {
+        std::vector<Price> prices;
+        trades.GetLastSpotPrices(period + 1, prices);
+        
+        if (prices.size() < period + 1) return 50.0;
+        
+        double gains = 0.0;
+        double losses = 0.0;
+        
+        for (size_t i = 1; i < prices.size(); ++i) {
+            double change = prices[i] - prices[i-1];
+            if (change > 0) gains += change;
+            else losses -= change;
+        }
+        
+        if (losses == 0) return 100.0;
+        
+        double avgGain = gains / period;
+        double avgLoss = losses / period;
+        double rs = avgGain / avgLoss;
+        
+        return 100.0 - (100.0 / (1.0 + rs));
+    }
+    
 public:
     using Agent::Agent;
+    
 private:
     void run() {
+        std::uniform_int_distribution<int> qty_dist(10, 30);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        
         while (flag) {
-            // Generate random order details
-//            Quantity quantity = qty_dist(rng);
-//            Side side = (!(rng() % 2 == 0)) ? Side::Buy : Side::Sell;
-//            Price price = (rng() % 2 == 0) ? price_dist1(rng)*100.0 : price_dist2(rng)*100.0;
-//            OrderID order_id = GenerateOrderID();
-//            counter++;
-            //auto order = std::make_unique<Order>(order_id, price, quantity, OrderType::Limit, side);
-            //auto command = std::make_unique<Command>(order);
-            //gateway.Push(std::move(command));
-
-//            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 50));
+            ProcessNewTrades();
+            
+            if (orderBook.BidsEmpty() || orderBook.AsksEmpty()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+            
+            double momentum = CalculateMomentum();
+            double rsi = CalculateRSI();
+            double currentPnL = GetPnL(trades.GetLastSpotPrice());
+            
+            // Stop loss check
+            if (currentPnL < stopLoss) {
+                std::cout << "MOMENTUM ID: " << std::setw(5) << agentID
+                         << " | STOPPED (LOSS): " << currentPnL << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+                continue;
+            }
+            
+            Price bestBid = orderBook.BestBid();
+            Price bestAsk = orderBook.BestAsk();
+            
+            // Detect trend changes
+            if (momentum > momentumThreshold && rsi < 70) {
+                currentTrend = TrendState::UPTREND;
+            } else if (momentum < -momentumThreshold && rsi > 30) {
+                currentTrend = TrendState::DOWNTREND;
+            } else if (std::abs(momentum) < momentumThreshold / 2) {
+                currentTrend = TrendState::NEUTRAL;
+            }
+            
+            // Trade based on momentum
+            Quantity orderSize = qty_dist(rng);
+            
+            if (currentTrend == TrendState::UPTREND && position < maxPosition) {
+                // Buy on uptrend
+                OrderID order_id = GenerateOrderID();
+                counter++;
+                auto order = std::make_unique<Order>(order_id, bestAsk, orderSize, OrderType::Limit, Side::Buy);
+                gateway.Push(std::make_unique<Command>(order));
+                
+            } else if (currentTrend == TrendState::DOWNTREND && position > -maxPosition) {
+                // Sell on downtrend
+                OrderID order_id = GenerateOrderID();
+                counter++;
+                auto order = std::make_unique<Order>(order_id, bestBid, orderSize, OrderType::Limit, Side::Sell);
+                gateway.Push(std::make_unique<Command>(order));
+                
+            } else if (currentTrend == TrendState::NEUTRAL && std::abs(position) > 0) {
+                // Close positions when momentum fades
+                Side exitSide = (position > 0) ? Side::Sell : Side::Buy;
+                Price exitPrice = (position > 0) ? bestBid : bestAsk;
+                Quantity exitSize = std::min(static_cast<Quantity>(std::abs(position)), orderSize);
+                
+                OrderID order_id = GenerateOrderID();
+                counter++;
+                auto order = std::make_unique<Order>(order_id, exitPrice, exitSize, OrderType::Limit, exitSide);
+                gateway.Push(std::make_unique<Command>(order));
+            }
+            
+            // Momentum traders act on signals but not too frequently (1-3 seconds)
+            std::cout << std::left << std::setw(8) << "Momentum"
+                      << "ID: " << std::right << std::setw(5) << agentID
+                      << " | Pos: " << std::right << std::setw(5) << position
+                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+                      << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 2000 + 1000));
         }
     }
 };
