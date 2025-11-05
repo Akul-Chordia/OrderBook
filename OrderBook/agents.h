@@ -7,7 +7,7 @@ protected:
     int agentID;
     int counter = 0;
     Quantity position = 0;
-    Price PnL;
+    Price PnL = 0;
     size_t lastTradeIndexProcessed = 0;
     Gateway& gateway;
     const OrderBook& orderBook;
@@ -128,7 +128,11 @@ private:
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
 
-            //std::cout << "Retail " << std::fixed << std::setw(15) << agentID << " : " << position << "| PnL : "<<GetPnL(trades.GetLastSpotPrice()) << std::endl;
+//            std::cout << std::left << std::setw(8) << "Retail"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 1000 + 500));
         }
     }
@@ -139,31 +143,47 @@ private:
     OrderID lastBidID = 0;
     OrderID lastAskID = 0;
     Quantity quantity = 0;
-//    std::vector<Price> prices;
-//    
-//    int CalculateVolatility(){
-//        trades.GetLastSpotPrices(100, prices);
-//        if (prices.size() < 2) return 0;
-//        std::vector<double> logReturns;
-//        logReturns.reserve(prices.size() - 1);
-//        for (size_t i = 1; i < prices.size(); ++i) {
-//            if (prices[i-1] <= 0 || prices[i] <= 0) continue;
-//            double ret = std::log(static_cast<double>(prices[i]) / static_cast<double>(prices[i-1]));
-//            logReturns.push_back(ret);
-//        }
-//        if (logReturns.size() < 2) return 0;
-//        double sum = 0.0;
-//        for (auto r : logReturns) sum += r;
-//        double mean = sum / logReturns.size();
-//        double varSum = 0.0;
-//        for (auto r : logReturns) {
-//            double diff = r - mean;
-//            varSum += diff * diff;
-//        }
-//        double variance = varSum / (logReturns.size() - 1);
-//        double volatility = std::sqrt(variance);
-//        return static_cast<int>(volatility * 10000);
-//    }
+    std::vector<Price> prices;
+    
+    int CalculateVolatility() {
+        std::vector<Price> prices;
+        trades.GetLastSpotPrices(1000, prices);
+        std::cout << "[";
+        for(Price a:prices){
+            std::cout<<a<<",";
+        }
+        std::cout << "]";
+        if (prices.size() < 2) return 0;
+        
+        std::vector<double> logReturns;
+        logReturns.reserve(prices.size() - 1);
+        
+        for (size_t i = 1; i < prices.size(); ++i) {
+            if (prices[i-1] == 0) continue;
+            double ratio = static_cast<double>(prices[i]) / static_cast<double>(prices[i-1]);
+
+            if (ratio <= 0) continue;
+
+            double ret = std::log(ratio);
+            logReturns.push_back(ret);
+        }
+
+        if (logReturns.size() < 2) return 0;
+
+        double sum = 0.0;
+        for (auto r : logReturns) sum += r;
+        double mean = sum / logReturns.size();
+
+        double varSum = 0.0;
+        for (auto r : logReturns) {
+            double diff = r - mean;
+            varSum += diff * diff;
+        }
+        double variance = varSum / (logReturns.size() - 1);
+        double volatility = std::sqrt(variance);
+        
+        return static_cast<int>(volatility * 10000);
+    }
     
 public:
     using Agent::Agent;
@@ -213,7 +233,12 @@ private:
                 }
             }
             
-            //std::cout << "HFT " << std::fixed << std::setw(15) << agentID << " : " << position << "| PnL : "<<GetPnL(trades.GetLastSpotPrice()) << std::endl;
+//            std::cout << std::left << std::setw(8) << "HFT"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
+            std::cout << "\n" << CalculateVolatility() << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 80 + 40));
         }
     }
@@ -221,14 +246,15 @@ private:
 
 class TWAPAgent : public Agent {
 private:
-    Quantity totalQuantityToExecute = 20000;
+    Quantity totalQuantityToExecute = 100000;
     std::chrono::seconds totalDuration = std::chrono::minutes(10);
-    int numOrders = 100;
+    int numOrders = 3600;
 
 public:
     using Agent::Agent;
 private:
     void run() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         if (numOrders == 0) return;
         
         Quantity quantityPerOrder = totalQuantityToExecute / numOrders;
@@ -238,12 +264,18 @@ private:
         if (timeInterval.count() == 0) return;
 
         for (int i = 0; i < numOrders; ++i) {
+            ProcessNewTrades();
             if (!flag) break;
             OrderID order_id = GenerateOrderID();
             counter++;
             auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, Side::Sell);
             gateway.Push(std::make_unique<Command>(order));
-
+            
+//            std::cout << std::left << std::setw(8) << "TWAPsell"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
             std::this_thread::sleep_for(timeInterval + std::chrono::milliseconds(rng() % 80));
         }
     }
