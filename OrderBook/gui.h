@@ -40,8 +40,8 @@ private:
     ScrollingBuffer AskHistory;
     ScrollingBuffer BidHistory;
     
-    Price price;
-    Quantity quantity;
+    Price price = 10000;
+    Quantity quantity = 100;
     Side side;
     OrderType orderType;
     
@@ -123,12 +123,14 @@ private:
     void OrderBookVisualization(const Snapshot& snapshot);
     void Debug(const Snapshot& snapshot);
     void SendOrder(Gateway& gateway);
+    void PriceChart(const Snapshot& snapshot);
     
     void DrawUI(){
         const Snapshot& snapshot = dataBuffer.Read();
         OrderBookVisualization(snapshot);
         Debug(snapshot);
         SendOrder(gateway);
+        PriceChart(snapshot);
     }
 };
 

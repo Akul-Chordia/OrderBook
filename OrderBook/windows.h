@@ -118,7 +118,35 @@ void GUI::Debug(const Snapshot& snapshot){
     ImGui::Separator();
     ImGui::Text("Best Bid: %.2f", bestBid / 100.0f);
     ImGui::Text("Best Ask: %.2f", bestAsk / 100.0f);
-    ImGui::Text("Mid Price: %.2f", midPrice/100.0f);
+    ImGui::Text("Spot Price: %.2f", snapshot.priceHistory.back()/100.0f);
+    ImGui::End();
+}
+
+void GUI::PriceChart(const Snapshot& snapshot){
+    ImGui::Begin("Price Chart");
+    if (snapshot.priceHistory.empty()) {
+        ImGui::Text("No trade data yet...");
+    } else {
+        if (ImPlot::BeginPlot("Spot Price", ImVec2(-1, -1), ImPlotFlags_NoMouseText)) {
+            ImPlot::SetupAxes("Trade Index", "Price", ImPlotAxisFlags_None, ImPlotAxisFlags_None);
+            ImPlot::SetupAxisLimits(ImAxis_X1, 0, 500, ImGuiCond_Always);
+            // Calculate min, max, and padding
+            float minPrice = *std::min_element(snapshot.priceHistory.begin(), snapshot.priceHistory.end());
+            float maxPrice = *std::max_element(snapshot.priceHistory.begin(), snapshot.priceHistory.end());
+            float range = maxPrice - minPrice;
+            float padding = range * 0.1f;
+            if (range == 0) padding = minPrice * 0.1f;
+            float yMin = minPrice - padding;
+            float yMax = maxPrice + padding;
+            ImPlot::SetupAxisLimits(ImAxis_Y1, yMin, yMax, ImGuiCond_Always);
+            ImPlot::PlotLine(
+                "Spot Price",
+                snapshot.priceHistory.data(),
+                static_cast<int>(snapshot.priceHistory.size())
+            );
+            ImPlot::EndPlot();
+        }
+    }
     ImGui::End();
 }
 
@@ -139,7 +167,7 @@ void GUI::SendOrder(Gateway& gateway){
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
         } else {
-            auto order = std::make_unique<Order>(orderIDcounter++, price*100, quantity, OrderType::Limit, Side::Buy);
+            auto order = std::make_unique<Order>(orderIDcounter++, price, quantity, OrderType::Limit, Side::Buy);
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
         }
