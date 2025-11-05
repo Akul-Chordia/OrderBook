@@ -73,7 +73,7 @@ int main(int argc, const char * argv[]) {
     DataBuffer dataBuffer;
     std::atomic<bool> flag(true);
     
-    const int numberOfAgents[5] = {100,5,1,0,0};// {Retail, HFT, TWAP(sell-pressure), unimplemented agents}
+    const int numberOfAgents[6] = {150, 5, 1, 4, 0, 3};// {Retail, HFT, TWAP, Market Maker, VWAP, Momentum}
     AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
     
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;

@@ -17,6 +17,15 @@ public:
         for(int i = 0; i<numberOfAgents[2]; i++){
             agents.emplace_back(std::make_unique<TWAPAgent>(++agentID, gateway, orderBook, trades, flag));
         }
+        for(int i = 0; i<numberOfAgents[3]; i++){
+            agents.emplace_back(std::make_unique<MarketMakerAgent>(++agentID, gateway, orderBook, trades, flag));
+        }
+        for(int i = 0; i<numberOfAgents[4]; i++){
+            agents.emplace_back(std::make_unique<VWAPAgent>(++agentID, gateway, orderBook, trades, flag));
+        }
+        for(int i = 0; i<numberOfAgents[5]; i++){
+            agents.emplace_back(std::make_unique<MomentumAgent>(++agentID, gateway, orderBook, trades, flag));
+        }
     }
     
     void StartAll(){
