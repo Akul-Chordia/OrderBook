@@ -53,10 +53,10 @@ void RunSimulation(Exchange& exchange, Gateway& gateway, AgentManager& agentMana
             agentManager.join_all();
         }
         
-//        if (i%5000==0){
-//            std::cout << "\033[2J\033[H" << std::flush;
-//            exchange.GetOrderBook().PrintOrderBook();
-//        }
+        if (i%5000==0){
+            std::cout << "\033[2J\033[H" << std::flush;
+            exchange.GetOrderBook().PrintOrderBook();
+        }
     }
 };
 

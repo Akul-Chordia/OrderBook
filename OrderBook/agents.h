@@ -109,7 +109,6 @@ public:
     using Agent::Agent;
 private:
     void run() {
-        // Each thread needs its own random number generator
         std::uniform_int_distribution<int> qty_dist(1, 20);
         std::normal_distribution<double> price_offset_dist(0, 4.0);
         const Price tickSize = 5;
@@ -213,9 +212,8 @@ public:
 
 private:
     void run() {
-        std::uniform_int_distribution<int> qty_dist(3, 8);  // Small size per order
+        std::uniform_int_distribution<int> qty_dist(3, 8);
         
-        // Wait briefly for initial market formation
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         while (flag) {
@@ -287,17 +285,16 @@ private:
                 gateway.Push(std::make_unique<Command>(askOrder));
             }
             
-            std::cout << std::left << std::setw(8) << "HFT"
-                     << "ID: " << std::right << std::setw(5) << agentID
-                     << " | Pos: " << std::right << std::setw(5) << position
-                     << " | PnL: " << std::right << std::setw(12) << std::fixed
-                     << std::setprecision(2) << currentPnL
-                     << " | Vol: " << std::right << std::setw(5) << static_cast<int>(volatility)
-                     << " | Trend: " << std::right << std::setw(6) << std::fixed
-                     << std::setprecision(1) << trend
-                     << std::endl;
+//            std::cout << std::left << std::setw(8) << "HFT"
+//                     << "ID: " << std::right << std::setw(5) << agentID
+//                     << " | Pos: " << std::right << std::setw(5) << position
+//                     << " | PnL: " << std::right << std::setw(12) << std::fixed
+//                     << std::setprecision(2) << currentPnL
+//                     << " | Vol: " << std::right << std::setw(5) << static_cast<int>(volatility)
+//                     << " | Trend: " << std::right << std::setw(6) << std::fixed
+//                     << std::setprecision(1) << trend
+//                     << std::endl;
             
-            // HFTs update quotes very frequently (40-120ms)
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 80 + 40));
         }
     }
@@ -330,12 +327,12 @@ private:
             auto order = std::make_unique<Order>(order_id, quantityPerOrder, OrderType::Market, side);
             gateway.Push(std::make_unique<Command>(order));
             
-            
-            std::cout << std::left << std::setw(8) << "TWAP"
-                      << "ID: " << std::right << std::setw(5) << agentID
-                      << " | Pos: " << std::right << std::setw(5) << position
-                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-                      << std::endl;
+           
+//            std::cout << std::left << std::setw(8) << "TWAP"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
             std::this_thread::sleep_for(timeInterval + std::chrono::milliseconds(rng() % 80));
         }
     }
@@ -408,11 +405,11 @@ private:
                 }
             }
             
-            std::cout << std::left << std::setw(8) << "MM"
-                      << "ID: " << std::right << std::setw(5) << agentID
-                      << " | Pos: " << std::right << std::setw(5) << position
-                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-                      << std::endl;
+//            std::cout << std::left << std::setw(8) << "MM"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 100));
         }
     }
@@ -558,12 +555,11 @@ private:
                 gateway.Push(std::make_unique<Command>(order));
             }
             
-            // Momentum traders act on signals but not too frequently (1-3 seconds)
-            std::cout << std::left << std::setw(8) << "Momentum"
-                      << "ID: " << std::right << std::setw(5) << agentID
-                      << " | Pos: " << std::right << std::setw(5) << position
-                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-                      << std::endl;
+//            std::cout << std::left << std::setw(8) << "Momentum"
+//                      << "ID: " << std::right << std::setw(5) << agentID
+//                      << " | Pos: " << std::right << std::setw(5) << position
+//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+//                      << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 2000 + 1000));
         }
     }

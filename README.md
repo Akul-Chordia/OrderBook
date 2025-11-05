@@ -44,7 +44,7 @@ Built entirely from scratch — no external trading libraries — with a focus o
 
 <table align="center">
    <tr>
-    <td align="center"> <img width="1569" height="1069" alt="image" src="https://github.com/user-attachments/assets/6b7d686d-6b7e-4480-8b11-e6cb8b13fa0c" alt="graphical interface"/></td>
+    <td align="center"> <img width="1800" height="1130" alt="image" src="https://github.com/user-attachments/assets/e4335d93-39bd-4b9b-9ab6-f6966e27b619" alt="graphical interface"/></td>
   </tr>
   <tr>
     <td align="center" width="400" style="border:none;">graphical interface</td>
