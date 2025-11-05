@@ -17,6 +17,7 @@
 #include <queue>
 #include <condition_variable> 
 #include <iomanip>
+#include <cmath>
 
 //GUI
 #include <imgui/imgui.h>

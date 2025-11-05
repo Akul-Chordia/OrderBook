@@ -7,6 +7,7 @@ protected:
     int agentID;
     int counter = 0;
     Quantity position = 0;
+    Price PnL;
     size_t lastTradeIndexProcessed = 0;
     Gateway& gateway;
     const OrderBook& orderBook;
@@ -58,10 +59,25 @@ protected:
     }
     
     void UpdatePositionFromTrade(const Trade& trade) {
+        Price tradePrice = trade.GetSpotPrice();
+        Quantity tradeQuantity = trade.GetQuantity();
+        
         if (GetAgentIDFromOrderID(trade.GetAggressorOrderID()) == agentID) {
-            position += (trade.GetSide() == Side::Buy) ? trade.GetQuantity() : -trade.GetQuantity();
+            if (trade.GetSide() == Side::Buy) {
+                position += tradeQuantity;
+                PnL -= (static_cast<double>(tradeQuantity) * tradePrice);
+            } else {
+                position -= tradeQuantity;
+                PnL += (static_cast<double>(tradeQuantity) * tradePrice);
+            }
         } else if (GetAgentIDFromOrderID(trade.GetSittingOrderID()) == agentID) {
-            position += (trade.GetSide() == Side::Buy) ? -trade.GetQuantity() : trade.GetQuantity();
+            if (trade.GetSide() == Side::Buy) {
+                position -= tradeQuantity;
+                PnL += (static_cast<double>(tradeQuantity) * tradePrice);
+            } else {
+                position += tradeQuantity;
+                PnL -= (static_cast<double>(tradeQuantity) * tradePrice);
+            }
         }
     }
         
@@ -81,6 +97,9 @@ protected:
         }
     }
     
+    Price GetPnL(Price currentSpot){
+        return (PnL + position*currentSpot);
+    }
     
 };
 
@@ -109,6 +128,7 @@ private:
             auto command = std::make_unique<Command>(order);
             gateway.Push(std::move(command));
 
+            //std::cout << "Retail " << std::fixed << std::setw(15) << agentID << " : " << position << "| PnL : "<<GetPnL(trades.GetLastSpotPrice()) << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 1000 + 500));
         }
     }
@@ -119,8 +139,39 @@ private:
     OrderID lastBidID = 0;
     OrderID lastAskID = 0;
     Quantity quantity = 0;
+//    std::vector<Price> prices;
+//    
+//    int CalculateVolatility(){
+//        trades.GetLastSpotPrices(100, prices);
+//        if (prices.size() < 2) return 0;
+//        std::vector<double> logReturns;
+//        logReturns.reserve(prices.size() - 1);
+//        for (size_t i = 1; i < prices.size(); ++i) {
+//            if (prices[i-1] <= 0 || prices[i] <= 0) continue;
+//            double ret = std::log(static_cast<double>(prices[i]) / static_cast<double>(prices[i-1]));
+//            logReturns.push_back(ret);
+//        }
+//        if (logReturns.size() < 2) return 0;
+//        double sum = 0.0;
+//        for (auto r : logReturns) sum += r;
+//        double mean = sum / logReturns.size();
+//        double varSum = 0.0;
+//        for (auto r : logReturns) {
+//            double diff = r - mean;
+//            varSum += diff * diff;
+//        }
+//        double variance = varSum / (logReturns.size() - 1);
+//        double volatility = std::sqrt(variance);
+//        return static_cast<int>(volatility * 10000);
+//    }
+    
 public:
     using Agent::Agent;
+
+    HFTAgent(int agentID, Gateway& gateway, const OrderBook& orderBook, const Trades& trades, std::atomic<bool>& flag)
+    : Agent(agentID, gateway, orderBook, trades, flag) {
+        //prices.reserve(100);
+    }
 private:
     void run() {
         std::uniform_int_distribution<int> qty_dist(5, 10);
@@ -140,27 +191,29 @@ private:
                     gateway.Push(std::move(command));
                 }
                 
-                Price newBidPrice = bestBid + 1;
-                Price newAskPrice = bestAsk - 1;
-                Quantity quantity = qty_dist(rng);
-                
-                if (position<300){
-                    lastBidID = GenerateOrderID();
-                    counter++;
-                    auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
-                    auto bidCommand = std::make_unique<Command>(bidOrder);
-                    gateway.Push(std::move(bidCommand));
-                }
-                if (position>-300){
-                    lastAskID = GenerateOrderID();
-                    counter++;
-                    auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
-                    auto askCommand = std::make_unique<Command>(askOrder);
-                    gateway.Push(std::move(askCommand));
+                if ((bestAsk - bestBid) > 2){
+                    Price newBidPrice = bestBid + 1;
+                    Price newAskPrice = bestAsk - 1;
+                    Quantity quantity = qty_dist(rng);
+                    
+                    if (position<300){
+                        lastBidID = GenerateOrderID();
+                        counter++;
+                        auto bidOrder = std::make_unique<Order>(lastBidID, newBidPrice, quantity, OrderType::Limit, Side::Buy);
+                        auto bidCommand = std::make_unique<Command>(bidOrder);
+                        gateway.Push(std::move(bidCommand));
+                    }
+                    if (position>-300){
+                        lastAskID = GenerateOrderID();
+                        counter++;
+                        auto askOrder = std::make_unique<Order>(lastAskID, newAskPrice, quantity, OrderType::Limit, Side::Sell);
+                        auto askCommand = std::make_unique<Command>(askOrder);
+                        gateway.Push(std::move(askCommand));
+                    }
                 }
             }
             
-            //std::cout << agentID << " : " << position << std::endl;
+            //std::cout << "HFT " << std::fixed << std::setw(15) << agentID << " : " << position << "| PnL : "<<GetPnL(trades.GetLastSpotPrice()) << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 80 + 40));
         }
     }
@@ -239,5 +292,3 @@ private:
         }
     }
 };
-
-
