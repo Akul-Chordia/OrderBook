@@ -19,6 +19,10 @@ public:
         return orderBook;
     }
     
+    const Trades& GetTrades() const {
+        return trades;
+    }
+    
     void AddOrder(OrderPtr order) {
         Order* rawOrder = order.get();
         //OrderID orderID = rawOrder->GetOrderID();

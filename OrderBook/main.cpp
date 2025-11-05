@@ -42,7 +42,7 @@ void RunSimulation(Exchange& exchange, Gateway& gateway, AgentManager& agentMana
         }
         auto currentTime = std::chrono::steady_clock::now();
         if (currentTime - lastUpdateTime > updateInterval) {
-            dataBuffer.Write(exchange.GetOrderBook());
+            dataBuffer.Write(exchange.GetOrderBook(), exchange.GetTrades());
             lastUpdateTime = currentTime;
         }
         
@@ -53,10 +53,10 @@ void RunSimulation(Exchange& exchange, Gateway& gateway, AgentManager& agentMana
             agentManager.join_all();
         }
         
-        if (i%5000==0){
-            std::cout << "\033[2J\033[H" << std::flush;
-            exchange.GetOrderBook().PrintOrderBook();
-        }
+//        if (i%5000==0){
+//            std::cout << "\033[2J\033[H" << std::flush;
+//            exchange.GetOrderBook().PrintOrderBook();
+//        }
     }
 };
 
@@ -73,7 +73,7 @@ int main(int argc, const char * argv[]) {
     DataBuffer dataBuffer;
     std::atomic<bool> flag(true);
     
-    const int numberOfAgents[5] = {300,10,1,0,0};// {Retail, HFT, TWAP(sell-pressure), unimplemented agents}
+    const int numberOfAgents[5] = {100,5,1,0,0};// {Retail, HFT, TWAP(sell-pressure), unimplemented agents}
     AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
     
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;

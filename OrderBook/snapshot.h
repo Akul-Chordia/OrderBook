@@ -5,15 +5,18 @@
 struct Snapshot {
     std::vector<std::pair<Price, Quantity>> asks;
     std::vector<std::pair<Price, Quantity>> bids;
+    std::vector<Price> priceHistory;
 
     Snapshot() {
         asks.reserve(1000);
         bids.reserve(1000);
+        priceHistory.reserve(500);
     }
 
     void clear() {
         asks.clear();
         bids.clear();
+        priceHistory.clear();
     }
 };
 
@@ -27,7 +30,7 @@ public:
     : bufferIndex{0}
     {}
 
-    void Write(const OrderBook& orderBook){
+    void Write(const OrderBook& orderBook, const Trades& trades){
         int writeIndex = 1 - bufferIndex.load(std::memory_order_relaxed);
         
         Snapshot& snapshot = dataBuffers[writeIndex];
@@ -39,6 +42,8 @@ public:
         for (const auto& [price, level] : orderBook.GetBids()) {
             snapshot.bids.emplace_back(price, level.GetQuantity());
         }
+        
+        trades.GetLastSpotPrices(500, snapshot.priceHistory);
         
         bufferIndex.store(writeIndex, std::memory_order_release);
     }
