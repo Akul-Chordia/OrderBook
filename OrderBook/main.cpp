@@ -73,8 +73,10 @@ int main(int argc, const char * argv[]) {
     DataBuffer dataBuffer;
     std::atomic<bool> flag(true);
     
-    const int numberOfAgents[6] = {150, 5, 1, 4, 0, 3};// {Retail, HFT, TWAP, Market Maker, VWAP, Momentum}
-    AgentManager agentManager(numberOfAgents, gateway, orderBook, trades, flag);
+    static constexpr int numberOfAgents[] = {150, 5, 1, 10, 0, 3}; // {Retail, HFT, TWAP, Market Maker, VWAP, Momentum}
+    constexpr int totalAgents = std::accumulate(std::begin(numberOfAgents), std::end(numberOfAgents), 0);
+    
+    AgentManager agentManager(numberOfAgents, totalAgents, gateway, orderBook, trades, flag);
     
     std::cout << "Starting " << numberOfAgents << " concurrent agents..." << std::endl;
     agentManager.StartAll();

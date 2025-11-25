@@ -35,12 +35,23 @@ public:
         
         Snapshot& snapshot = dataBuffers[writeIndex];
         snapshot.clear();
-
+        
+        int count = 0;
         for (const auto& [price, level] : orderBook.GetAsks()) {
+            if (count > 500){
+                break;
+            }
             snapshot.asks.emplace_back(price, level.GetQuantity());
+            count++;
+            
         }
+        count = 0;
         for (const auto& [price, level] : orderBook.GetBids()) {
+            if (count > 500){
+                break;
+            }
             snapshot.bids.emplace_back(price, level.GetQuantity());
+            count++;
         }
         
         trades.GetLastSpotPrices(500, snapshot.priceHistory);

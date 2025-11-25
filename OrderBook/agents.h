@@ -141,6 +141,8 @@ class HFTAgent : public Agent{
 private:
     OrderID lastBidID = 0;
     OrderID lastAskID = 0;
+    std::vector<Price> prices;
+    std::vector<double> logReturns;
     
     // Realistic HFT parameters
     const double maxLossLimit = -100000.0;     // Tighter stop-loss
@@ -161,12 +163,11 @@ private:
     size_t minTradesForStartup = 500;
     
     std::pair<double, double> CalculateMarketState() {
-        std::vector<Price> prices;
         trades.GetLastSpotPrices(500, prices);
         
         if (prices.size() < 2) return {0, 0};
         
-        std::vector<double> logReturns;
+        
         logReturns.reserve(prices.size() - 1);
         for (size_t i = 1; i < prices.size(); ++i) {
             if (prices[i-1] == 0) continue;
@@ -213,6 +214,9 @@ public:
 private:
     void run() {
         std::uniform_int_distribution<int> qty_dist(3, 8);
+        
+        prices.reserve(500);
+        logReturns.reserve(500);
         
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -311,7 +315,7 @@ public:
     using Agent::Agent;
 private:
     void run() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000 + rng() % 5000));
         if (numOrders == 0) return;
         
         Quantity quantityPerOrder = totalQuantityToExecute / numOrders;
@@ -405,11 +409,11 @@ private:
                 }
             }
             
-//            std::cout << std::left << std::setw(8) << "MM"
-//                      << "ID: " << std::right << std::setw(5) << agentID
-//                      << " | Pos: " << std::right << std::setw(5) << position
-//                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
-//                      << std::endl;
+            std::cout << std::left << std::setw(8) << "MM"
+                      << "ID: " << std::right << std::setw(5) << agentID
+                      << " | Pos: " << std::right << std::setw(5) << position
+                      << " | PnL: " << std::right << std::setw(12) << std::fixed << std::setprecision(2) << GetPnL(trades.GetLastSpotPrice())
+                      << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(rng() % 100 + 100));
         }
     }
@@ -442,12 +446,13 @@ private:
     const double momentumThreshold = 50.0;
     const Quantity maxPosition = 150;
     const double stopLoss = -20000.0;
+    std::vector<Price> prices;
+    std::vector<Price> RSIcache;
     
     enum class TrendState { NEUTRAL, UPTREND, DOWNTREND };
     TrendState currentTrend = TrendState::NEUTRAL;
     
     double CalculateMomentum() {
-        std::vector<Price> prices;
         trades.GetLastSpotPrices(lookbackPeriod, prices);
         
         if (prices.size() < lookbackPeriod) return 0.0;
@@ -463,16 +468,15 @@ private:
     }
     
     double CalculateRSI(int period = 14) {
-        std::vector<Price> prices;
-        trades.GetLastSpotPrices(period + 1, prices);
+        trades.GetLastSpotPrices(period + 1, RSIcache);
         
-        if (prices.size() < period + 1) return 50.0;
+        if (RSIcache.size() < period + 1) return 50.0;
         
         double gains = 0.0;
         double losses = 0.0;
         
-        for (size_t i = 1; i < prices.size(); ++i) {
-            double change = prices[i] - prices[i-1];
+        for (size_t i = 1; i < RSIcache.size(); ++i) {
+            double change = RSIcache[i] - RSIcache[i-1];
             if (change > 0) gains += change;
             else losses -= change;
         }
@@ -492,6 +496,9 @@ public:
 private:
     void run() {
         std::uniform_int_distribution<int> qty_dist(10, 30);
+        
+        prices.reserve(lookbackPeriod);
+        RSIcache.reserve(14);
         std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         
         while (flag) {

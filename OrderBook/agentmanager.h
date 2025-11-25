@@ -6,8 +6,9 @@ class AgentManager {
 private:
     std::vector<std::unique_ptr<Agent>> agents;
 public:
-    AgentManager(const int* numberOfAgents, Gateway& gateway, const OrderBook& orderBook, const Trades& trades, std::atomic<bool>& flag){
+    AgentManager(const int* numberOfAgents, int totalAgents, Gateway& gateway, const OrderBook& orderBook, const Trades& trades, std::atomic<bool>& flag){
         int agentID = 0;
+        agents.reserve(totalAgents);
         for(int i = 0; i<numberOfAgents[0]; i++){
             agents.emplace_back(std::make_unique<RetailAgent>(++agentID, gateway, orderBook, trades, flag));
         }
